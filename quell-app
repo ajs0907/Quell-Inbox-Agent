@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quell — AI Inbox Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=DM+Serif+Display:wght@400&display=swap');
+
+  :root {
+    --bg:        #07090f;
+    --bg2:       #0b0e17;
+    --bg3:       #0f1320;
+    --border:    #161c2a;
+    --border2:   #1c2438;
+    --text:      #c2cfe0;
+    --text2:     #5a6a84;
+    --text3:     #2c3548;
+    --accent:    #7c9ef8;
+    --accent-dim:#0d1428;
+    --accent-glow:#7c9ef822;
+    --red:       #f87171;
+    --orange:    #fb923c;
+    --yellow:    #fbbf24;
+    --purple:    #c084fc;
+    --teal:      #2dd4bf;
+    --pink:      #f472b6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: #1c2438; border-radius: 2px; }
+
+  /* Animations */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* Layout */
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Auth screen */
+  #auth-screen {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 0;
+    background: radial-gradient(ellipse at 25% 35%, #0a1428 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 65%, #0d0f1e 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, #080c18 0%, transparent 70%),
+                var(--bg);
+  }
+
+  .auth-card {
+    width: 400px;
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 40px;
+    background: var(--bg2);
+    animation: fadeUp .4s ease;
+  }
+
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -1px;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .auth-logo span { color: var(--accent); }
+
+  .auth-tagline {
+    font-size: 12px;
+    color: var(--text3);
+    letter-spacing: .06em;
+    margin-bottom: 32px;
+    font-weight: 300;
+  }
+
+  .feature-list { margin-bottom: 32px; display: flex; flex-direction: column; gap: 10px; }
+  .feature-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 12px; color: var(--text2); line-height: 1.5;
+  }
+  .feature-icon { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+  .google-btn {
+    width: 100%;
+    background: #fff;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 20px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background .15s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .google-btn:hover { background: #f0f0f0; transform: translateY(-1px); }
+  .google-btn:active { transform: translateY(0); }
+
+  .auth-note {
+    margin-top: 14px;
+    font-size: 10px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* Config bar */
+  #config-bar {
+    display: none;
+    background: #090e1a;
+    border-bottom: 1px solid #141e30;
+    padding: 8px 20px;
+    font-size: 10px;
+    color: #2a3d5a;
+    align-items: center;
+    gap: 10px;
+  }
+  #config-bar code {
+    color: #3a5a8a;
+    background: #0a1220;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* Main app header */
+  #main-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .app-logo {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -.3px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .app-logo span { color: var(--accent); }
+
+  .header-stats { display: flex; gap: 8px; flex: 1; }
+
+  .stat-pill {
+    font-size: 10px;
+    border-radius: 4px;
+    padding: 3px 8px;
+    border: 1px solid;
+    letter-spacing: .04em;
+  }
+
+  .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .user-chip {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10px; color: var(--text3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px 4px 6px;
+  }
+  .user-avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--accent);
+  }
+
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 6px;
+    padding: 6px 14px; font-size: 12px;
+    font-family: inherit; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    letter-spacing: .02em; transition: all .15s; flex-shrink: 0;
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  .btn-primary:hover { background: #96b2ff; box-shadow: 0 0 16px var(--accent-glow); }
+  .btn-primary:disabled { background: #111825; color: #1e2a3a; cursor: not-allowed; box-shadow: none; }
+
+  .btn-ghost {
+    background: transparent; color: var(--text3);
+    border: 1px solid var(--border2); border-radius: 5px;
+    padding: 6px 12px; font-size: 10px;
+    font-family: inherit; cursor: pointer;
+    letter-spacing: .04em; transition: all .15s;
+  }
+  .btn-ghost:hover { color: var(--text2); border-color: #333; }
+
+  /* Main layout */
+  #main-layout {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Inbox panel */
+  #inbox-panel {
+    width: 340px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100%;
+  }
+
+  #filter-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 10px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  #filter-bar::-webkit-scrollbar { height: 0; }
+
+  .filter-btn {
+    background: transparent; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3); font-size: 11px;
+    padding: 9px 10px; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+    letter-spacing: .03em; transition: color .12s;
+    font-weight: 400;
+  }
+  .filter-btn:hover { color: var(--text2); }
+  .filter-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  #email-list { overflow-y: auto; flex: 1; }
+
+  .email-row {
+    padding: 12px 14px;
+    border-bottom: 1px solid #0d1018;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all .1s;
+  }
+  .email-row:hover { background: #0c1020; }
+  .email-row.selected { background: #0c1020; border-left-color: var(--accent); }
+
+  .row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .row-from { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 185px; }
+  .row-from.unread { font-weight: 600; color: var(--text); }
+  .row-from.read { color: #444; }
+  .row-date { font-size: 9px; color: var(--text3); flex-shrink: 0; }
+  .row-subject { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 5px; }
+  .row-subject.unread { color: #a0a098; font-weight: 500; }
+  .row-subject.read { color: #555; }
+  .row-tags { display: flex; align-items: center; justify-content: space-between; }
+  .row-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .unread-dot {
+    display: inline-block; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--accent);
+    margin-right: 5px; vertical-align: middle;
+  }
+
+  .badge {
+    font-size: 8px; border-radius: 3px;
+    padding: 1px 5px; letter-spacing: .06em;
+    border: 1px solid; white-space: nowrap;
+  }
+
+  /* Detail panel */
+  #detail-panel {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  #detail-empty {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px; color: #10161f;
+  }
+  #detail-empty .big { font-family: 'DM Serif Display', serif; font-size: 72px; font-weight: 400; letter-spacing: -3px; ; }
+
+  #detail-content { max-width: 680px; padding: 26px 30px; animation: fadeUp .2s ease; }
+
+  .detail-header { margin-bottom: 20px; }
+  .detail-subject { font-family: 'DM Serif Display', serif; font-size: 19px; font-weight: 600; color: #e0eaf8; line-height: 1.35; margin-bottom: 8px; }
+  .detail-meta { font-size: 11px; color: var(--text3); display: flex; gap: 14px; flex-wrap: wrap; }
+  .detail-meta span { color: var(--text2); }
+
+  /* Triage cards */
+  .triage-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 7px; margin-bottom: 8px; }
+  .triage-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .card-label {
+    font-size: 9px; color: var(--text3); letter-spacing: .12em;
+    text-transform: uppercase; margin-bottom: 6px; font-weight: 500;
+  }
+  .card-value { font-size: 12px; line-height: 1.4; }
+
+  /* Feature cards */
+  .feature-card {
+    border-radius: 7px; padding: 12px 14px;
+    margin-bottom: 8px; animation: slideDown .2s ease;
+  }
+  .feature-card-label {
+    font-size: 9px; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 500; margin-bottom: 9px;
+  }
+
+  .signal-tag {
+    display: inline-block; font-size: 9px; color: #777;
+    background: #0d0d10; border: 1px solid var(--border2);
+    border-radius: 3px; padding: 2px 7px; margin: 2px;
+  }
+
+  .deadline-row { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px; }
+  .deadline-date { font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .deadline-label { font-size: 10px; color: #555; }
+
+  .opportunity-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .opportunity-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .opportunity-body { flex: 1; }
+  .opportunity-type { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
+  .opportunity-desc { font-size: 11px; color: #888; line-height: 1.5; }
+
+  /* Reply section */
+  #reply-section {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 7px; overflow: hidden; margin-bottom: 8px;
+  }
+  #reply-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 13px;
+  }
+  #reply-label { font-size: 10px; color: var(--text3); letter-spacing: .12em; text-transform: uppercase; }
+  #reply-actions { display: flex; gap: 6px; }
+
+  .btn-copy {
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: 4px; padding: 3px 9px; font-size: 10px;
+    color: var(--text3); cursor: pointer; font-family: inherit;
+    transition: all .15s;
+  }
+  .btn-copy:hover { color: var(--text2); }
+  .btn-copy.success { color: var(--accent); border-color: #1a2a50; background: var(--accent-dim); }
+
+  .btn-draft {
+    border: none; border-radius: 5px;
+    padding: 4px 11px; font-size: 11px;
+    font-family: inherit; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    letter-spacing: .02em; transition: all .15s;
+  }
+  .btn-draft.idle { background: var(--accent); color: #fff; }
+  .btn-draft.idle:hover { background: #96b2ff; box-shadow: 0 0 12px var(--accent-glow); }
+  .btn-draft.loading { background: var(--accent-dim); color: var(--accent); cursor: not-allowed; }
+  .btn-draft.open { background: transparent; color: var(--text3); border: 1px solid var(--border2); }
+
+  #reply-body {
+    display: none;
+    padding: 13px 15px;
+    border-top: 1px solid var(--border);
+  }
+  #reply-text {
+    font-size: 12px; color: var(--text2); line-height: 1.9;
+    white-space: pre-wrap; font-family: inherit;
+  }
+  #reply-cursor { animation: blink .7s ease infinite; color: var(--accent); }
+
+  /* Email body */
+  #email-body-section {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-bottom: 8px;
+  }
+  .section-label { font-size: 9px; color: var(--text3); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+  #email-body-text { font-size: 12px; color: var(--text2); line-height: 1.9; white-space: pre-wrap; }
+
+  /* Loading overlay for triage */
+  .analyzing-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px; background: var(--accent-dim);
+    border: 1px solid #1a2a48; border-radius: 8px;
+    margin-bottom: 8px; animation: pulse 1.2s ease infinite;
+  }
+  .analyzing-bar span { font-size: 12px; color: var(--accent); }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block; border-radius: 50%;
+    border-style: solid; animation: spin .6s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* Empty state */
+  .empty-list { padding: 32px; text-align: center; color: var(--text3); font-size: 11px; }
+
+  /* Loading screen */
+  #loading-screen {
+    display: none;
+    flex: 1; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .loading-logo { font-family: 'DM Serif Display', serif; font-weight: 600; font-size: 24px; color: #fff; letter-spacing: -1px; }
+  .loading-logo span { color: var(--accent); }
+  .loading-msg { font-size: 12px; color: var(--text3); font-weight: 300; }
+  .loading-bar { width: 200px; height: 1px; background: var(--border2); border-radius: 1px; overflow: hidden; }
+  .loading-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: loadfill 1.5s ease forwards; }
+  @keyframes loadfill { from{width:0} to{width:100%} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">QUE<span>LL</span></div>
+      <div class="auth-tagline">Silence your inbox chaos · powered by Claude</div>
+
+      <div class="feature-list">
+        <div class="feature-item"><span class="feature-icon">◆</span><span><strong style="color:#d4d0c8">Urgency &amp; Category</strong> — Critical, High, Medium, Low classification on every email</span></div>
+        <div class="feature-item"><span class="feature-icon">⏱</span><span><strong style="color:#d4d0c8">Due Date Extraction</strong> — deadlines and time-sensitive actions auto-surfaced</span></div>
+        <div class="feature-item"><span class="feature-icon">✦</span><span><strong style="color:#d4d0c8">One-Click Reply Draft</strong> — context-aware replies generated instantly</span></div>
+        <div class="feature-item"><span class="feature-icon">◎</span><span><strong style="color:#d4d0c8">Opportunity Identifier</strong> — partnerships, hiring leads, events &amp; invitations flagged</span></div>
+      </div>
+
+      <button class="google-btn" onclick="startGoogleAuth()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Connect with Google
+      </button>
+
+      <div class="auth-note">
+        Requires Gmail API access. Your emails are only processed when you request triage — nothing is stored.<br/>
+        <span style="color:#1e1e22">You'll need a Google Cloud project with Gmail API enabled. See setup guide below.</span>
+      </div>
+
+      <div style="margin-top:20px; padding:14px; background:#0c0c0f; border:1px solid #1a1a1e; border-radius:7px;">
+        <div style="font-size:9px;color:#2a2a30;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">Quick setup (2 min)</div>
+        <div style="font-size:10px;color:#2a2a2e;line-height:1.9;">
+          1. Go to <code style="color:#4a7aaa;background:#0a1520;padding:1px 4px;border-radius:2px">console.cloud.google.com</code><br/>
+          2. Create a project → Enable <strong style="color:#4a6aaa">Gmail API</strong><br/>
+          3. Create OAuth 2.0 credentials → Web app<br/>
+          4. Add <code style="color:#4a7aaa;background:#0a1520;padding:1px 4px;border-radius:2px">http://localhost</code> as authorized origin<br/>
+          5. Paste your Client ID below and click Connect
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+          <input id="client-id-input" type="text" placeholder="Your Google OAuth Client ID…"
+            style="flex:1;background:#08080a;border:1px solid #222;border-radius:5px;padding:7px 10px;color:#d4d0c8;font-size:10px;font-family:inherit;outline:none;"
+            oninput="document.getElementById('connect-btn').style.opacity=this.value?'1':'.4'"
+          />
+          <button id="connect-btn" onclick="initGmailWithClientId()" style="background:var(--accent);color:#000;border:none;border-radius:5px;padding:7px 14px;font-size:10px;font-family:inherit;font-weight:500;cursor:pointer;opacity:.4;transition:opacity .15s;">Connect</button>
+        </div>
+      </div>
+
+      <!-- Demo mode -->
+      <div style="margin-top:12px;text-align:center;">
+        <button onclick="startDemoMode()" style="background:transparent;border:none;font-size:10px;color:#2a2a30;cursor:pointer;font-family:inherit;text-decoration:underline;letter-spacing:.04em;">
+          Or try demo mode (no Gmail needed)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <div class="loading-logo">QUE<span>LL</span></div>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+    <div class="loading-msg" id="loading-msg">Connecting to Gmail…</div>
+  </div>
+
+  <!-- CONFIG BAR -->
+  <div id="config-bar">
+    ⚙ Quell — demo mode active · replace <code>MOCK_EMAILS</code> with real Gmail API calls once you have OAuth credentials set up
+    <span style="margin-left:auto;font-size:9px;color:#1e3a1e;">docs.gmail.com/api</span>
+  </div>
+
+  <!-- MAIN HEADER -->
+  <header id="main-header">
+    <div class="app-logo">QUE<span>LL</span></div>
+    <div class="header-stats" id="header-stats"></div>
+    <div class="header-right">
+      <div class="user-chip" id="user-chip">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name">Loading…</span>
+      </div>
+      <button class="btn-primary" id="triage-all-btn" onclick="triageAll()">▶ triage all</button>
+      <button class="btn-ghost" onclick="refreshInbox()">↻ refresh</button>
+      <button class="btn-ghost" onclick="signOut()" style="color:#333;">sign out</button>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div id="main-layout">
+    <!-- INBOX PANEL -->
+    <div id="inbox-panel">
+      <div id="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('Critical',this)">Critical</button>
+        <button class="filter-btn" onclick="setFilter('High',this)">High</button>
+        <button class="filter-btn" onclick="setFilter('Medium',this)">Medium</button>
+        <button class="filter-btn" onclick="setFilter('Low',this)">Low</button>
+        <button class="filter-btn" onclick="setFilter('Opportunity',this)">◎ Opportunities</button>
+        <button class="filter-btn" onclick="setFilter('Deadlines',this)">⏱ Deadlines</button>
+      </div>
+      <div id="email-list"></div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div id="detail-panel">
+      <div id="detail-empty">
+        <div class="big">@</div>
+        <div style="font-size:11px;">select an email to triage</div>
+      </div>
+      <div id="detail-content" style="display:none">
+        <div class="detail-header">
+          <div class="detail-subject" id="d-subject"></div>
+          <div class="detail-meta">
+            <span>from: <span id="d-from"></span></span>
+            <span id="d-date"></span>
+          </div>
+        </div>
+
+        <!-- Triage trigger -->
+        <div id="triage-trigger" style="margin-bottom:12px;display:none">
+          <button class="btn-primary" style="width:100%;justify-content:center" onclick="triageSelected()">▶ triage this email</button>
+        </div>
+
+        <!-- Analyzing state -->
+        <div id="analyzing-state" style="display:none" class="analyzing-bar">
+          <div class="spinner" style="width:11px;height:11px;border-width:1.5px;border-color:#7c9ef833;border-top-color:#7c9ef8"></div>
+          <span>Analyzing with Claude AI…</span>
+        </div>
+
+        <!-- Triage results -->
+        <div id="triage-results" style="display:none">
+          <div class="triage-grid">
+            <div class="triage-card">
+              <div class="card-label">Urgency</div>
+              <div class="card-value" id="d-urgency"></div>
+            </div>
+            <div class="triage-card">
+              <div class="card-label">Category</div>
+              <div class="card-value" id="d-category"></div>
+            </div>
+            <div class="triage-card">
+              <div class="card-label">Reason</div>
+              <div class="card-value" style="font-size:10px;color:#666;line-height:1.5" id="d-reason"></div>
+            </div>
+          </div>
+
+          <!-- Due dates -->
+          <div id="deadlines-card" class="feature-card" style="background:#0e0c00;border:1px solid #2a220918;display:none">
+            <div class="feature-card-label" style="color:#6b3f12">⏱ Deadlines Detected</div>
+            <div id="deadlines-list"></div>
+          </div>
+
+          <!-- Opportunities -->
+          <div id="opportunities-card" class="feature-card" style="background:#09101c;border:1px solid #162038;display:none">
+            <div class="feature-card-label" style="color:#3a5a9a">◎ Opportunities Identified</div>
+            <div id="opportunities-list"></div>
+          </div>
+
+          <!-- Reply -->
+          <div id="reply-section">
+            <div id="reply-header">
+              <div id="reply-label">✦ one-click reply draft</div>
+              <div id="reply-actions">
+                <button class="btn-copy" id="copy-btn" style="display:none" onclick="copyReply()">copy</button>
+                <button class="btn-draft idle" id="draft-btn" onclick="handleDraftClick()">✦ draft reply</button>
+              </div>
+            </div>
+            <div id="reply-body">
+              <div id="reply-text"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email body -->
+        <div id="email-body-section">
+          <div class="section-label">original message</div>
+          <div id="email-body-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIG — fill these in
+════════════════════════════════════════════════════════ */
+let GOOGLE_CLIENT_ID = '';
+const GMAIL_SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
+const ANTHROPIC_PROXY = 'https://api.anthropic.com/v1/messages'; // direct (works from claude.ai)
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════════ */
+let emails = [];
+let currentFilter = 'All';
+let selectedEmailId = null;
+let tokenClient = null;
+let accessToken = null;
+let isDemoMode = false;
+let replyOpen = false;
+let replyText = '';
+
+/* ═══════════════════════════════════════════════════════
+   DEMO DATA
+════════════════════════════════════════════════════════ */
+const DEMO_EMAILS = [
+  {
+    id: 'd1', from: 'alex.rivera@enterprise-client.com', fromName: 'Alex Rivera',
+    subject: 'Production API completely down — customers affected',
+    snippet: 'Our integration has been failing for 2 hours. 3,000 users cannot access the platform...',
+    body: 'Hi,\n\nOur production integration with your API has been completely down for the past 2 hours. Approximately 3,000 of our enterprise customers cannot access the platform. This is a Sev-1 incident and I need a senior engineer immediately.\n\nEvery minute costs us significantly.\n\nAlex Rivera\nVP Engineering, Enterprise Client Corp',
+    date: '10:47 AM', read: false,
+  },
+  {
+    id: 'd2', from: 'priya.nair@vendor.io', fromName: 'Priya Nair',
+    subject: 'Q4 contract renewal — deadline this Friday',
+    snippet: 'The deadline to lock in current pricing is this Friday, October 18th...',
+    body: 'Hi,\n\nFollowing up on the Q4 contract renewal. The deadline to lock in current pricing is this Friday, October 18th.\n\nKey changes: 5% base price increase, updated SLA guarantees, revised auto-renewal clause.\n\nPlease sign before Friday to avoid the new pricing tier.\n\nBest,\nPriya Nair\nAccount Executive, Vendor.io',
+    date: '9:22 AM', read: false,
+  },
+  {
+    id: 'd3', from: 'marcus.chen@techventures.vc', fromName: 'Marcus Chen',
+    subject: 'Partnership opportunity — AI infrastructure collaboration',
+    snippet: 'Hi, I lead partnerships at TechVentures. We\'ve been following your work and believe there\'s a strong fit...',
+    body: 'Hi,\n\nI lead strategic partnerships at TechVentures VC. We\'ve been following your work closely and believe there\'s a strong collaboration opportunity between our portfolio companies and your platform.\n\nWe\'re hosting a private roundtable for AI infrastructure founders on November 8th in SF — would love to have you join. Great opportunity to connect with potential partners and co-investors.\n\nWould you be open to a 20-min intro call this week?\n\nBest,\nMarcus Chen\nHead of Partnerships, TechVentures VC',
+    date: 'Yesterday', read: true,
+  },
+  {
+    id: 'd4', from: 'talent@stripe.com', fromName: 'Stripe Recruiting',
+    subject: 'Staff Engineer — Infrastructure role at Stripe',
+    snippet: 'Hi, your background caught our eye. We\'re hiring for a Staff Engineer on our infrastructure team...',
+    body: 'Hi,\n\nYour background in distributed systems caught our eye. We\'re hiring a Staff Engineer on our core infrastructure team — the group that handles billions of API requests daily.\n\nComp range: $280–340k base + meaningful equity\nTeam: 8 engineers, high autonomy\nLocation: SF or remote-friendly\n\nApplication deadline: November 1st.\n\nWould you be open to a conversation?\n\nStripe Recruiting Team',
+    date: 'Yesterday', read: true,
+  },
+  {
+    id: 'd5', from: 'events@sfsummit.io', fromName: 'SF Tech Summit',
+    subject: 'You\'re invited: SF Tech Summit — Nov 14, complimentary pass',
+    snippet: 'We\'d like to offer you a complimentary speaker pass to SF Tech Summit, November 14th...',
+    body: 'Hi,\n\nWe\'d like to offer you a complimentary full-access pass to SF Tech Summit on November 14th at Moscone Center.\n\nThis year\'s summit features:\n- 60+ speakers across AI, infrastructure, and fintech\n- 1,200 attendees: founders, investors, engineers\n- Networking dinner Nov 13th (evening before)\n\nRSVP by October 28th to confirm your complimentary pass. Space is limited.\n\nHope to see you there!\nSF Tech Summit Team',
+    date: 'Oct 14', read: true,
+  },
+  {
+    id: 'd6', from: 'billing@aws.amazon.com', fromName: 'AWS Billing',
+    subject: 'Your AWS bill for September 2024: $4,847.23',
+    snippet: 'Total due: $4,847.23 — 23% higher than last month. Payment due October 20th...',
+    body: 'AWS Billing Statement\nBilling Period: September 1–30, 2024\nTotal Amount Due: $4,847.23\n\nThis is 23% higher than your August bill ($3,941.10).\n\nTop services:\n- EC2: $2,104.50\n- RDS: $987.00\n- S3: $445.23\n- CloudFront: $310.50\n\nPayment due: October 20, 2024.',
+    date: 'Oct 12', read: true,
+  },
+  {
+    id: 'd7', from: 'weekly@tldr.tech', fromName: 'TLDR Newsletter',
+    subject: 'TLDR 2024-10-14: OpenAI o3, Rust 2024, K8s 1.31',
+    snippet: 'Today\'s top stories: OpenAI releases o3 reasoning model, Rust 2024 stabilized...',
+    body: 'TLDR Newsletter — Monday, October 14, 2024\n\n🤖 AI\nOpenAI releases o3 reasoning model with dramatically improved math benchmarks.\n\n🦀 Languages\nRust 2024 edition officially stabilized with new async trait syntax.\n\n☸️ Infrastructure\nKubernetes 1.31 released with new storage APIs.',
+    date: 'Oct 14', read: true,
+  },
+];
+
+/* ═══════════════════════════════════════════════════════
+   AUTH & GMAIL
+════════════════════════════════════════════════════════ */
+function startGoogleAuth() {
+  alert('Enter your Google OAuth Client ID in the field above first. See the setup guide for instructions.');
+}
+
+function initGmailWithClientId() {
+  const id = document.getElementById('client-id-input').value.trim();
+  if (!id) return;
+  GOOGLE_CLIENT_ID = id;
+
+  showLoading('Loading Google Identity Services…');
+
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.onload = () => {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GMAIL_SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { alert('Auth error: ' + resp.error); showAuth(); return; }
+        accessToken = resp.access_token;
+        await loadGmailInbox();
+      },
+    });
+    tokenClient.requestAccessToken();
+  };
+  script.onerror = () => { alert('Could not load Google auth. Check your Client ID and allowed origins.'); showAuth(); };
+  document.head.appendChild(script);
+}
+
+async function loadGmailInbox() {
+  updateLoadingMsg('Fetching your inbox…');
+  try {
+    const listRes = await fetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:inbox',
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const listData = await listRes.json();
+    const messages = listData.messages || [];
+
+    updateLoadingMsg(`Loading ${messages.length} emails…`);
+
+    // Fetch user profile
+    const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const profile = await profileRes.json();
+    setUserInfo(profile.emailAddress);
+
+    // Fetch each message
+    emails = [];
+    for (const msg of messages) {
+      const msgRes = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const msgData = await msgRes.json();
+      emails.push(parseGmailMessage(msgData));
+    }
+
+    showApp(false);
+  } catch (e) {
+    console.error(e);
+    alert('Error fetching emails: ' + e.message);
+    showAuth();
+  }
+}
+
+function parseGmailMessage(msg) {
+  const headers = msg.payload.headers || [];
+  const get = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+  const from = get('From');
+  const fromName = from.replace(/<.*>/, '').trim().replace(/"/g,'') || from.split('@')[0];
+  const dateStr = get('Date');
+  const date = dateStr ? new Date(dateStr) : new Date();
+  const now = new Date();
+  const dateLabel = date.toDateString() === now.toDateString()
+    ? date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+    : date.toLocaleDateString([], {month:'short',day:'numeric'});
+
+  let body = '';
+  function extractBody(part) {
+    if (part.mimeType === 'text/plain' && part.body?.data) {
+      body = atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+    } else if (part.parts) {
+      part.parts.forEach(extractBody);
+    }
+  }
+  extractBody(msg.payload);
+
+  return {
+    id: msg.id,
+    from: from.match(/<(.+)>/)?.[1] || from,
+    fromName: fromName,
+    subject: get('Subject') || '(no subject)',
+    snippet: msg.snippet || '',
+    body: body || msg.snippet || '',
+    date: dateLabel,
+    read: !msg.labelIds?.includes('UNREAD'),
+    triage: null,
+    triaging: false,
+  };
+}
+
+function refreshInbox() {
+  if (isDemoMode) {
+    emails = DEMO_EMAILS.map(e => ({ ...e, triage: null, triaging: false }));
+    renderEmailList();
+    clearDetail();
+    updateHeaderStats();
+  } else if (accessToken) {
+    showLoading('Refreshing…');
+    loadGmailInbox();
+  }
+}
+
+function signOut() {
+  accessToken = null;
+  emails = [];
+  isDemoMode = false;
+  showAuth();
+}
+
+/* ═══════════════════════════════════════════════════════
+   DEMO MODE
+════════════════════════════════════════════════════════ */
+function startDemoMode() {
+  isDemoMode = true;
+  emails = DEMO_EMAILS.map(e => ({ ...e, triage: null, triaging: false }));
+  setUserInfo('demo@example.com');
+  showApp(true);
+}
+
+/* ═══════════════════════════════════════════════════════
+   UI TRANSITIONS
+════════════════════════════════════════════════════════ */
+function showAuth() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('main-header').style.display = 'none';
+  document.getElementById('main-layout').style.display = 'none';
+  document.getElementById('config-bar').style.display = 'none';
+}
+
+function showLoading(msg) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+  document.getElementById('main-header').style.display = 'none';
+  document.getElementById('main-layout').style.display = 'none';
+  document.getElementById('config-bar').style.display = 'none';
+  document.getElementById('loading-msg').textContent = msg;
+}
+
+function updateLoadingMsg(msg) {
+  document.getElementById('loading-msg').textContent = msg;
+}
+
+function showApp(demo) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('main-header').style.display = 'flex';
+  document.getElementById('main-layout').style.display = 'flex';
+  document.getElementById('config-bar').style.display = demo ? 'flex' : 'none';
+  renderEmailList();
+  updateHeaderStats();
+}
+
+function setUserInfo(email) {
+  const name = email.split('@')[0];
+  document.getElementById('user-name').textContent = email;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMAIL LIST RENDERING
+════════════════════════════════════════════════════════ */
+const URGENCY_COLORS = {
+  Critical: { color:'#f87171', bg:'#2d1010', border:'#7f1d1d' },
+  High:     { color:'#fb923c', bg:'#2d1a0e', border:'#7c2d12' },
+  Medium:   { color:'#fbbf24', bg:'#241c08', border:'#6b3a0a' },
+  Low:      { color:'#4ade80', bg:'#0e2318', border:'#14532d' },
+};
+
+const CAT_ICONS = {
+  'Incident / Support': { icon:'⚠', color:'#f87171' },
+  'Contract / Legal':   { icon:'§', color:'#c084fc' },
+  'Finance / Billing':  { icon:'₿', color:'#34d399' },
+  'Code Review / DevOps':{ icon:'⌥', color:'#60a5fa' },
+  'Internal / Team':    { icon:'◈', color:'#f472b6' },
+  'Newsletter':         { icon:'◉', color:'#94a3b8' },
+  'Recruiting / HR':    { icon:'◎', color:'#fb923c' },
+  'Sales / Partnership':{ icon:'◆', color:'#818cf8' },
+  'Other':              { icon:'◇', color:'#64748b' },
+};
+
+function getVisibleEmails() {
+  if (currentFilter === 'All') return emails;
+  if (currentFilter === 'Opportunity') return emails.filter(e => e.triage?.opportunities?.length > 0);
+  if (currentFilter === 'Deadlines') return emails.filter(e => e.triage?.due_dates?.length > 0);
+  return emails.filter(e => e.triage?.urgency === currentFilter);
+}
+
+function renderEmailList() {
+  const list = document.getElementById('email-list');
+  const visible = getVisibleEmails();
+
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="empty-list">no emails in this filter</div>';
+    return;
+  }
+
+  list.innerHTML = visible.map(email => {
+    const isSel = email.id === selectedEmailId;
+    const urg = email.triage ? URGENCY_COLORS[email.triage.urgency] : null;
+    const hasOpp = email.triage?.opportunities?.length > 0;
+    const hasDates = email.triage?.due_dates?.length > 0;
+
+    const urgBadge = urg ? `<span class="badge" style="color:${urg.color};background:${urg.bg};border-color:${urg.border}">${email.triage.urgency}</span>` : '';
+    const oppBadge = hasOpp ? `<span class="badge" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎ opp</span>` : '';
+    const dateBadge = hasDates ? `<span class="badge" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱</span>` : '';
+    const triagingBadge = email.triaging ? `<span style="font-size:9px;color:#7c9ef8;display:flex;align-items:center;gap:3px"><span class="spinner" style="width:8px;height:8px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8"></span>analyzing</span>` : '';
+    const notTriaged = !email.triage && !email.triaging ? `<span style="font-size:8px;color:#1e1e22">not triaged</span>` : '';
+
+    return `<div class="email-row ${isSel?'selected':''}" onclick="selectEmail('${email.id}')">
+      <div class="row-top">
+        <div class="row-from ${email.read?'read':'unread'}">
+          ${!email.read ? '<span class="unread-dot"></span>' : ''}${escHtml(email.fromName)}
+        </div>
+        <div class="row-date">${escHtml(email.date)}</div>
+      </div>
+      <div class="row-subject ${email.read?'read':'unread'}">${escHtml(email.subject)}</div>
+      <div class="row-tags">
+        <div class="row-badges">${oppBadge}${dateBadge}</div>
+        <div style="display:flex;gap:4px;align-items:center">${triagingBadge}${urgBadge}${notTriaged}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEmailList();
+}
+
+/* ═══════════════════════════════════════════════════════
+   EMAIL DETAIL
+════════════════════════════════════════════════════════ */
+function selectEmail(id) {
+  selectedEmailId = id;
+  renderEmailList();
+  renderDetail();
+}
+
+function clearDetail() {
+  selectedEmailId = null;
+  document.getElementById('detail-empty').style.display = 'flex';
+  document.getElementById('detail-content').style.display = 'none';
+  renderEmailList();
+}
+
+function renderDetail() {
+  const email = emails.find(e => e.id === selectedEmailId);
+  if (!email) return;
+
+  document.getElementById('detail-empty').style.display = 'none';
+  document.getElementById('detail-content').style.display = 'block';
+
+  document.getElementById('d-subject').textContent = email.subject;
+  document.getElementById('d-from').textContent = email.from;
+  document.getElementById('d-date').textContent = email.date;
+  document.getElementById('email-body-text').textContent = email.body;
+
+  // Reset reply
+  replyOpen = false;
+  replyText = '';
+  document.getElementById('reply-body').style.display = 'none';
+  document.getElementById('reply-text').innerHTML = '';
+  document.getElementById('copy-btn').style.display = 'none';
+  const draftBtn = document.getElementById('draft-btn');
+  draftBtn.className = 'btn-draft idle';
+  draftBtn.innerHTML = '✦ draft reply';
+
+  if (email.triaging) {
+    document.getElementById('triage-trigger').style.display = 'none';
+    document.getElementById('analyzing-state').style.display = 'flex';
+    document.getElementById('triage-results').style.display = 'none';
+  } else if (!email.triage) {
+    document.getElementById('triage-trigger').style.display = 'block';
+    document.getElementById('analyzing-state').style.display = 'none';
+    document.getElementById('triage-results').style.display = 'none';
+  } else {
+    document.getElementById('triage-trigger').style.display = 'none';
+    document.getElementById('analyzing-state').style.display = 'none';
+    document.getElementById('triage-results').style.display = 'block';
+    renderTriageResults(email.triage);
+  }
+}
+
+function renderTriageResults(t) {
+  const urg = URGENCY_COLORS[t.urgency] || URGENCY_COLORS.Medium;
+  const cat = CAT_ICONS[t.category] || CAT_ICONS['Other'];
+
+  document.getElementById('d-urgency').innerHTML = `<span style="color:${urg.color};font-weight:500">${t.urgency}</span>`;
+  document.getElementById('d-category').innerHTML = `<span style="color:${cat.color}">${cat.icon} ${t.category}</span>`;
+  document.getElementById('d-reason').textContent = t.reason;
+
+  // Deadlines
+  const dc = document.getElementById('deadlines-card');
+  if (t.due_dates?.length > 0) {
+    dc.style.display = 'block';
+    document.getElementById('deadlines-list').innerHTML = t.due_dates.map(d =>
+      `<div class="deadline-row"><span class="deadline-date" style="color:#fbbf24">${escHtml(d.date)}</span><span class="deadline-label">— ${escHtml(d.label)}</span></div>`
+    ).join('');
+  } else {
+    dc.style.display = 'none';
+  }
+
+  // Opportunities
+  const oc = document.getElementById('opportunities-card');
+  if (t.opportunities?.length > 0) {
+    oc.style.display = 'block';
+    const oppColors = {
+      'Partnership': '#818cf8', 'Recruiting': '#fb923c',
+      'Event': '#4ade80', 'Invitation': '#60a5fa', 'Other': '#94a3b8'
+    };
+    document.getElementById('opportunities-list').innerHTML = t.opportunities.map(o => {
+      const col = oppColors[o.type] || '#94a3b8';
+      return `<div class="opportunity-row">
+        <div class="opportunity-icon" style="color:${col}">◎</div>
+        <div class="opportunity-body">
+          <div class="opportunity-type" style="color:${col}">${escHtml(o.type)}</div>
+          <div class="opportunity-desc">${escHtml(o.description)}</div>
+          ${o.action ? `<div style="font-size:10px;color:#3a5a7a;margin-top:4px">→ ${escHtml(o.action)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    oc.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TRIAGE — CLAUDE API
+════════════════════════════════════════════════════════ */
+async function triageSelected() {
+  const email = emails.find(e => e.id === selectedEmailId);
+  if (!email) return;
+  await triageEmail(email.id);
+}
+
+async function triageAll() {
+  const btn = document.getElementById('triage-all-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px;border-color:#00000033;border-top-color:#fff"></span> triaging…';
+
+  const untriaged = emails.filter(e => !e.triage);
+  for (const email of untriaged) {
+    await triageEmail(email.id);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✓ all triaged';
+  setTimeout(() => { btn.innerHTML = '▶ triage all'; }, 3000);
+}
+
+async function triageEmail(id) {
+  const email = emails.find(e => e.id === id);
+  if (!email || email.triage || email.triaging) return;
+
+  email.triaging = true;
+  renderEmailList();
+  if (id === selectedEmailId) renderDetail();
+
+  const prompt = `You are an expert email triage assistant. Analyze this email and respond ONLY with valid JSON — no markdown, no extra text whatsoever.
+
+From: ${email.from}
+Subject: ${email.subject}
+Body: ${email.body}
+
+Return exactly this JSON structure:
+{
+  "urgency": "Critical|High|Medium|Low",
+  "category": "Incident / Support|Contract / Legal|Finance / Billing|Code Review / DevOps|Internal / Team|Newsletter|Recruiting / HR|Sales / Partnership|Other",
+  "reason": "One sentence explaining the urgency level",
+  "due_dates": [
+    { "date": "exact date/time string from email", "label": "brief description of what's due" }
+  ],
+  "opportunities": [
+    {
+      "type": "Partnership|Recruiting|Event|Invitation|Other",
+      "description": "Brief description of the opportunity",
+      "action": "Suggested next action (optional)"
+    }
+  ]
+}
+
+Rules:
+- due_dates: extract ALL deadlines, cutoff dates, time-sensitive actions. Empty array if none.
+- opportunities: identify partnership leads, hiring/recruiting signals, event invitations, RSVPs, beneficial networking opportunities. Empty array if none.
+- Be specific and actionable in descriptions.`;
+
+  try {
+    const res = await fetch(ANTHROPIC_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const raw = (data.content || []).map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    email.triage = JSON.parse(clean);
+  } catch (e) {
+    email.triage = {
+      urgency: 'Medium', category: 'Other',
+      reason: 'Could not analyze.', due_dates: [], opportunities: [],
+    };
+  }
+
+  email.triaging = false;
+  renderEmailList();
+  if (id === selectedEmailId) renderDetail();
+  updateHeaderStats();
+}
+
+/* ═══════════════════════════════════════════════════════
+   REPLY DRAFTING
+════════════════════════════════════════════════════════ */
+async function handleDraftClick() {
+  const email = emails.find(e => e.id === selectedEmailId);
+  if (!email?.triage) return;
+
+  if (replyText) {
+    replyOpen = !replyOpen;
+    document.getElementById('reply-body').style.display = replyOpen ? 'block' : 'none';
+    document.getElementById('draft-btn').className = replyOpen ? 'btn-draft open' : 'btn-draft idle';
+    document.getElementById('draft-btn').innerHTML = replyOpen ? '▲ hide' : '▼ show draft';
+    return;
+  }
+
+  const draftBtn = document.getElementById('draft-btn');
+  draftBtn.className = 'btn-draft loading';
+  draftBtn.innerHTML = '<span class="spinner" style="width:9px;height:9px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8"></span> drafting…';
+
+  replyOpen = true;
+  document.getElementById('reply-body').style.display = 'block';
+  document.getElementById('reply-label').style.color = '#3a5aaa';
+
+  const t = email.triage;
+  const prompt = `Write a professional, concise email reply.
+
+Original email:
+From: ${email.from}
+Subject: ${email.subject}
+Body: ${email.body}
+
+Context:
+- Urgency: ${t.urgency}
+- Category: ${t.category}
+${t.due_dates?.length ? `- Deadlines: ${t.due_dates.map(d=>d.date+': '+d.label).join(', ')}` : ''}
+${t.opportunities?.length ? `- Opportunities identified: ${t.opportunities.map(o=>o.type+': '+o.description).join(', ')}` : ''}
+
+Write a reply that:
+- Matches the urgency and tone (professional, not robotic)
+- Acknowledges any deadlines by name
+- For opportunity emails: shows genuine interest without over-committing
+- Ends with a clear, specific next step
+- Is 3–6 sentences for routine, up to 8 for urgent matters
+
+Reply with ONLY the email body text — no subject line, no metadata.`;
+
+  try {
+    const res = await fetch(ANTHROPIC_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    replyText = (data.content || []).map(b => b.text || '').join('');
+
+    // Typewriter effect
+    const el = document.getElementById('reply-text');
+    el.innerHTML = '';
+    for (let i = 0; i <= replyText.length; i++) {
+      await sleep(10);
+      el.innerHTML = escHtml(replyText.slice(0, i)) + (i < replyText.length ? '<span id="reply-cursor">▋</span>' : '');
+    }
+
+    document.getElementById('copy-btn').style.display = 'inline-flex';
+    draftBtn.className = 'btn-draft open';
+    draftBtn.innerHTML = '▲ hide';
+  } catch (e) {
+    replyText = 'Could not generate reply. Please try again.';
+    document.getElementById('reply-text').textContent = replyText;
+    draftBtn.className = 'btn-draft idle';
+    draftBtn.innerHTML = '✦ retry';
+  }
+}
+
+function copyReply() {
+  if (!replyText) return;
+  navigator.clipboard.writeText(replyText);
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = '✓ copied!';
+  btn.classList.add('success');
+  setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('success'); }, 2000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER STATS
+════════════════════════════════════════════════════════ */
+function updateHeaderStats() {
+  const triaged = emails.filter(e => e.triage);
+  if (triaged.length === 0) {
+    document.getElementById('header-stats').innerHTML = '';
+    return;
+  }
+  const critical = triaged.filter(e => e.triage.urgency === 'Critical').length;
+  const opps = triaged.filter(e => e.triage.opportunities?.length > 0).length;
+  const deadlines = triaged.reduce((a, e) => a + (e.triage.due_dates?.length || 0), 0);
+
+  let html = '';
+  if (critical > 0) html += `<span class="stat-pill" style="color:#f87171;background:#2d1010;border-color:#7f1d1d">⚠ ${critical} critical</span>`;
+  if (deadlines > 0) html += `<span class="stat-pill" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱ ${deadlines} deadline${deadlines>1?'s':''}</span>`;
+  if (opps > 0) html += `<span class="stat-pill" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎ ${opps} opportunit${opps>1?'ies':'y'}</span>`;
+  html += `<span style="font-size:10px;color:#222;margin-left:4px">${triaged.length}/${emails.length} triaged</span>`;
+  document.getElementById('header-stats').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
