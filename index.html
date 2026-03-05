@@ -859,23 +859,51 @@ function parseGmailMessage(msg) {
     ? date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
     : date.toLocaleDateString([], {month:'short',day:'numeric'});
 
-  let body = '';
+  let plainBody = '';
+  let htmlBody = '';
+
   function extractBody(part) {
-    if (part.mimeType === 'text/plain' && part.body?.data) {
-      body = atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
-    } else if (part.parts) {
+    if (!part) return;
+    const mime = part.mimeType || '';
+    if (mime === 'text/plain' && part.body?.data) {
+      try {
+        plainBody += atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+      } catch(e) {}
+    } else if (mime === 'text/html' && part.body?.data) {
+      try {
+        htmlBody += atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+      } catch(e) {}
+    } else if (part.parts && Array.isArray(part.parts)) {
       part.parts.forEach(extractBody);
+    }
+    // Also check body.data directly on the payload (simple messages)
+    if (!part.parts && !plainBody && !htmlBody && part.body?.data && mime !== 'text/html') {
+      try {
+        plainBody += atob(part.body.data.replace(/-/g,'+').replace(/_/g,'/'));
+      } catch(e) {}
     }
   }
   extractBody(msg.payload);
 
+  // Strip HTML tags to get readable text if only HTML is available
+  let body = plainBody.trim();
+  if (!body && htmlBody) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = htmlBody;
+    body = (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+  // Final fallback to snippet
+  if (!body) body = msg.snippet || '';
+  // Truncate very long emails to avoid token limits
+  if (body.length > 3000) body = body.slice(0, 3000) + '\n[truncated]';
+
   return {
     id: msg.id,
     from: from.match(/<(.+)>/)?.[1] || from,
-    fromName: fromName,
+    fromName: fromName || from.split('@')[0],
     subject: get('Subject') || '(no subject)',
     snippet: msg.snippet || '',
-    body: body || msg.snippet || '',
+    body,
     date: dateLabel,
     read: !msg.labelIds?.includes('UNREAD'),
     triage: null,
@@ -1294,21 +1322,33 @@ Rules:
   try {
     const res = await fetch(ANTHROPIC_PROXY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
     const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     const raw = (data.content || []).map(b => b.text || '').join('');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    email.triage = JSON.parse(clean);
+    const clean = raw.replace(/```json[\s\S]*?```|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    // Validate required fields
+    if (!parsed.urgency || !['Critical','High','Medium','Low'].includes(parsed.urgency)) {
+      throw new Error('Invalid urgency in response');
+    }
+    email.triage = parsed;
   } catch (e) {
+    console.error('Triage error for', email.subject, ':', e.message);
     email.triage = {
       urgency: 'Medium', category: 'Other',
-      reason: 'Could not analyze.', due_dates: [], opportunities: [],
+      reason: 'Analysis failed: ' + e.message, due_dates: [], opportunities: [],
+      _error: true,
     };
   }
 
@@ -1323,7 +1363,8 @@ Rules:
 ════════════════════════════════════════════════════════ */
 async function handleDraftClick() {
   const email = emails.find(e => e.id === selectedEmailId);
-  if (!email?.triage) return;
+  if (!email) return;
+  if (!email.triage) { alert('Please triage this email first.'); return; }
 
   if (replyText) {
     replyOpen = !replyOpen;
@@ -1367,15 +1408,21 @@ Reply with ONLY the email body text — no subject line, no metadata.`;
   try {
     const res = await fetch(ANTHROPIC_PROXY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
     const data = await res.json();
-    replyText = (data.content || []).map(b => b.text || '').join('');
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    replyText = (data.content || []).map(b => b.text || '').join('').trim();
+    if (!replyText) throw new Error('Empty response from API');
 
     // Typewriter effect
     const el = document.getElementById('reply-text');
@@ -1469,14 +1516,19 @@ Write a natural, warm briefing like a smart assistant would. Mention the most im
   try {
     const res = await fetch(ANTHROPIC_PROXY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 200,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
     const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
     const text = (data.content || []).map(b => b.text || '').join('').trim();
     briefingGenerated = true;
 
