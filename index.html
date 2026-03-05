@@ -434,6 +434,76 @@
   .loading-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: loadfill 1.5s ease forwards; }
   @keyframes loadfill { from{width:0} to{width:100%} }
 
+  /* Primary contacts */
+  .vip-btn {
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: 5px; padding: 4px 10px; font-size: 10px;
+    font-family: inherit; color: var(--text3); cursor: pointer;
+    transition: all .15s; letter-spacing: .03em;
+  }
+  .vip-btn:hover { color: #f9a8d4; border-color: #6d1a38; background: #1a0810; }
+  .vip-btn.active { color: #f9a8d4; border-color: #6d1a38; background: #2d0f1e; }
+
+  #vip-modal {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.7); align-items: center; justify-content: center;
+  }
+  #vip-modal.open { display: flex; }
+  .vip-modal-card {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 12px; width: 420px; max-height: 80vh;
+    display: flex; flex-direction: column; animation: fadeUp .2s ease;
+  }
+  .vip-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .vip-modal-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #fff; }
+  .vip-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .vip-modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+
+  .vip-contact-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .vip-contact-row:last-child { border-bottom: none; }
+  .vip-contact-info { flex: 1; min-width: 0; }
+  .vip-contact-name { font-size: 12px; color: var(--text); margin-bottom: 2px; }
+  .vip-contact-email { font-size: 10px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vip-contact-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  .vip-boost-select {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 3px 6px; font-size: 10px;
+    color: var(--text2); font-family: inherit; cursor: pointer;
+  }
+  .vip-remove-btn {
+    background: transparent; border: 1px solid #3a1010;
+    border-radius: 4px; padding: 3px 8px; font-size: 10px;
+    color: #f87171; cursor: pointer; font-family: inherit;
+    transition: all .15s;
+  }
+  .vip-remove-btn:hover { background: #2d1010; }
+
+  .vip-add-form { display: flex; gap: 6px; margin-top: 4px; }
+  .vip-input {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 5px; padding: 7px 10px; font-size: 11px;
+    color: var(--text); font-family: inherit; outline: none;
+  }
+  .vip-input:focus { border-color: #f9a8d450; }
+  .vip-add-btn {
+    background: #f9a8d4; color: #1a0810; border: none;
+    border-radius: 5px; padding: 7px 14px; font-size: 11px;
+    font-family: inherit; font-weight: 500; cursor: pointer;
+    transition: all .15s; white-space: nowrap;
+  }
+  .vip-add-btn:hover { background: #fbc7dc; }
+
+  .vip-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 20px 0; }
+
+  .detail-header-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
   /* Daily briefing card */
   #briefing-card {
     display: none; border-bottom: 1px solid var(--border);
@@ -553,6 +623,7 @@
         <span id="user-name">Loading…</span>
       </div>
       <button class="btn-primary" id="triage-all-btn" onclick="triageAll()">▶ triage all</button>
+      <button class="btn-ghost" onclick="openVipModal()">★ contacts</button>
       <button class="btn-ghost" onclick="refreshInbox()">↻ refresh</button>
       <button class="btn-ghost" onclick="signOut()" style="color:#333;">sign out</button>
     </div>
@@ -617,6 +688,9 @@
           <div class="detail-meta">
             <span>from: <span id="d-from"></span></span>
             <span id="d-date"></span>
+          </div>
+          <div class="detail-header-actions">
+            <button class="vip-btn" id="vip-toggle-btn" onclick="toggleVipFromDetail()">★ add to primary contacts</button>
           </div>
         </div>
 
@@ -707,6 +781,27 @@ let replyText = '';
 let selectedIds = new Set();
 let showSpam = false;
 let briefingGenerated = false;
+
+// Primary contacts: { 'email@domain.com': { name, label, addedAt } }
+let primaryContacts = JSON.parse(localStorage.getItem('quell_primary_contacts') || '{}');
+
+function savePrimaryContacts() {
+  localStorage.setItem('quell_primary_contacts', JSON.stringify(primaryContacts));
+}
+function addPrimaryContact(emailAddr, name, label) {
+  primaryContacts[emailAddr] = { name: name || emailAddr.split('@')[0], label: label || 'Primary', addedAt: Date.now() };
+  savePrimaryContacts();
+  renderEmailList();
+}
+function removePrimaryContact(emailAddr) {
+  delete primaryContacts[emailAddr];
+  savePrimaryContacts();
+  renderEmailList();
+  renderDetail();
+}
+function getEffectiveUrgency(email) {
+  return email.triage?.urgency;
+}
 
 /* ═══════════════════════════════════════════════════════
    DEMO DATA
@@ -1075,7 +1170,10 @@ function renderEmailList() {
     const hasDates = email.triage?.due_dates?.length > 0;
     const spam = isSpam(email);
 
+    const isVip = !!primaryContacts[email.from];
+    const vipData = primaryContacts[email.from];
     const urgBadge = urg && !spam ? `<span class="badge" style="color:${urg.color};background:${urg.bg};border-color:${urg.border}">${email.triage.urgency}</span>` : '';
+    const vipBadge = isVip ? `<span class="badge" style="color:#f9a8d4;background:#2d0f1e;border-color:#6d1a38">★ ${escHtml(vipData.label || 'Primary')}</span>` : '';
     const spamBadge = spam ? `<span class="spam-badge">spam / ads</span>` : '';
     const oppBadge = hasOpp ? `<span class="badge" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎</span>` : '';
     const dateBadge = hasDates ? `<span class="badge" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱</span>` : '';
@@ -1095,7 +1193,7 @@ function renderEmailList() {
           </div>
           <div class="row-subject ${email.read?'read':'unread'}">${escHtml(email.subject)}</div>
           <div class="row-tags">
-            <div class="row-badges">${oppBadge}${dateBadge}${spamBadge}</div>
+            <div class="row-badges">${vipBadge}${oppBadge}${dateBadge}${spamBadge}</div>
             <div style="display:flex;gap:4px;align-items:center">${triagingBadge}${urgBadge}${notTriaged}</div>
           </div>
         </div>
@@ -1199,6 +1297,8 @@ function renderDetail() {
     draftBtn.className = 'btn-draft idle';
     draftBtn.innerHTML = '✦ draft reply';
   }
+
+  updateVipDetailButton(email);
 
   if (email.triaging) {
     document.getElementById('triage-trigger').style.display = 'none';
@@ -1366,44 +1466,57 @@ async function handleDraftClick() {
   if (!email) return;
   if (!email.triage) { alert('Please triage this email first.'); return; }
 
-  if (replyText) {
+  const draftBtn = document.getElementById('draft-btn');
+  const replyBody = document.getElementById('reply-body');
+
+  // If already drafted, toggle visibility
+  if (email.cachedReply) {
     replyOpen = !replyOpen;
-    document.getElementById('reply-body').style.display = replyOpen ? 'block' : 'none';
-    document.getElementById('draft-btn').className = replyOpen ? 'btn-draft open' : 'btn-draft idle';
-    document.getElementById('draft-btn').innerHTML = replyOpen ? '▲ hide' : '▼ show draft';
+    replyBody.style.display = replyOpen ? 'block' : 'none';
+    draftBtn.className = replyOpen ? 'btn-draft open' : 'btn-draft idle';
+    draftBtn.innerHTML = replyOpen ? '▲ hide' : '▼ show draft';
     return;
   }
 
-  const draftBtn = document.getElementById('draft-btn');
+  // Start drafting
   draftBtn.className = 'btn-draft loading';
   draftBtn.innerHTML = '<span class="spinner" style="width:9px;height:9px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8"></span> drafting…';
-
   replyOpen = true;
-  document.getElementById('reply-body').style.display = 'block';
+  replyBody.style.display = 'block';
   document.getElementById('reply-label').style.color = '#3a5aaa';
+  document.getElementById('reply-text').innerHTML = '<span style="color:var(--text3);font-size:11px">Generating reply…</span>';
 
   const t = email.triage;
-  const prompt = `Write a professional, concise email reply.
+  const vipNote = primaryContacts[email.from] ? `
+Note: This sender is a primary contact (VIP). Treat with extra care and responsiveness.` : '';
 
-Original email:
+  const messages = [
+    {
+      role: 'user',
+      content: `You are a professional email assistant. Write a reply to this email.
+
+ORIGINAL EMAIL:
 From: ${email.from}
 Subject: ${email.subject}
-Body: ${email.body}
+Body:
+${(email.body || '').slice(0, 2000)}
 
-Context:
+CONTEXT:
 - Urgency: ${t.urgency}
 - Category: ${t.category}
-${t.due_dates?.length ? `- Deadlines: ${t.due_dates.map(d=>d.date+': '+d.label).join(', ')}` : ''}
-${t.opportunities?.length ? `- Opportunities identified: ${t.opportunities.map(o=>o.type+': '+o.description).join(', ')}` : ''}
+- Reason: ${t.reason || ''}
+${t.due_dates && t.due_dates.length ? '- Deadlines: ' + t.due_dates.map(d => d.date + ': ' + d.label).join(', ') : ''}
+${t.opportunities && t.opportunities.length ? '- Opportunities: ' + t.opportunities.map(o => o.type + ': ' + o.description).join(', ') : ''}${vipNote}
 
-Write a reply that:
-- Matches the urgency and tone (professional, not robotic)
-- Acknowledges any deadlines by name
-- For opportunity emails: shows genuine interest without over-committing
-- Ends with a clear, specific next step
-- Is 3–6 sentences for routine, up to 8 for urgent matters
-
-Reply with ONLY the email body text — no subject line, no metadata.`;
+INSTRUCTIONS:
+Write ONLY the reply body text. No subject line, no From/To headers, no metadata.
+- Match tone to urgency: urgent = direct and action-focused; routine = professional and warm
+- Reference specific details from the email (names, dates, amounts)
+- End with exactly one clear next step
+- Length: 3-5 sentences for Low/Medium, 5-8 for High/Critical
+- Write like a real person, not a template`
+    }
+  ];
 
   try {
     const res = await fetch(ANTHROPIC_PROXY, {
@@ -1414,35 +1527,45 @@ Reply with ONLY the email body text — no subject line, no metadata.`;
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }],
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages,
       }),
     });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-    replyText = (data.content || []).map(b => b.text || '').join('').trim();
-    if (!replyText) throw new Error('Empty response from API');
 
-    // Typewriter effect
-    const el = document.getElementById('reply-text');
-    el.innerHTML = '';
-    for (let i = 0; i <= replyText.length; i++) {
-      await sleep(10);
-      el.innerHTML = escHtml(replyText.slice(0, i)) + (i < replyText.length ? '<span id="reply-cursor">▋</span>' : '');
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('HTTP ' + res.status + ': ' + errText.slice(0, 200));
     }
 
-    // Cache reply so it persists when switching emails
-    const currentEmail = emails.find(e => e.id === selectedEmailId);
-    if (currentEmail) currentEmail.cachedReply = replyText;
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    const draft = (data.content || []).map(b => b.type === 'text' ? b.text : '').join('').trim();
+    if (!draft) throw new Error('API returned empty content');
+
+    // Cache on email object
+    email.cachedReply = draft;
+    replyText = draft;
+
+    // Typewriter reveal
+    const el = document.getElementById('reply-text');
+    el.innerHTML = '';
+    for (let i = 0; i <= draft.length; i++) {
+      await sleep(8);
+      el.innerHTML = escHtml(draft.slice(0, i)) + (i < draft.length ? '<span id="reply-cursor">▋</span>' : '');
+    }
+
     document.getElementById('copy-btn').style.display = 'inline-flex';
     draftBtn.className = 'btn-draft open';
     draftBtn.innerHTML = '▲ hide';
+
   } catch (e) {
-    replyText = 'Could not generate reply. Please try again.';
-    document.getElementById('reply-text').textContent = replyText;
+    console.error('Reply draft error:', e);
+    document.getElementById('reply-text').innerHTML = '<span style="color:#f87171;font-size:11px">Error: ' + escHtml(e.message) + '</span>';
     draftBtn.className = 'btn-draft idle';
     draftBtn.innerHTML = '✦ retry';
+    email.cachedReply = null;
   }
 }
 
@@ -1546,6 +1669,85 @@ Write a natural, warm briefing like a smart assistant would. Mention the most im
     body.textContent = 'Could not generate briefing.';
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   PRIMARY CONTACTS UI
+════════════════════════════════════════════════════════ */
+function openVipModal() {
+  renderVipModal();
+  document.getElementById('vip-modal').classList.add('open');
+}
+
+function closeVipModal() {
+  document.getElementById('vip-modal').classList.remove('open');
+}
+
+function renderVipModal() {
+  const contacts = Object.entries(primaryContacts);
+  const list = document.getElementById('vip-contact-list');
+  const empty = document.getElementById('vip-empty');
+  if (contacts.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = contacts.map(([addr, c]) => `
+    <div class="vip-contact-row">
+      <div class="vip-contact-info">
+        <div class="vip-contact-name">${escHtml(c.name)}</div>
+        <div class="vip-contact-email">${escHtml(addr)}</div>
+      </div>
+      <div class="vip-contact-actions">
+        <span style="font-size:10px;color:#f9a8d4;background:#2d0f1e;border:1px solid #6d1a38;border-radius:3px;padding:2px 7px">★ ${escHtml(c.label || 'Primary')}</span>
+        <button class="vip-remove-btn" onclick="removeVipFromModal('${escHtml(addr)}')">remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function addVipFromModal() {
+  const addr = document.getElementById('vip-email-input').value.trim();
+  const name = document.getElementById('vip-name-input').value.trim();
+  const label = document.getElementById('vip-label-input').value.trim();
+  if (!addr) return;
+  addPrimaryContact(addr, name || addr.split('@')[0], label || 'Primary');
+  document.getElementById('vip-email-input').value = '';
+  document.getElementById('vip-name-input').value = '';
+  document.getElementById('vip-label-input').value = '';
+  renderVipModal();
+}
+
+function removeVipFromModal(addr) {
+  removePrimaryContact(addr);
+  renderVipModal();
+}
+
+// updateVipBoost removed — no urgency boosting
+
+function toggleVipFromDetail() {
+  const email = emails.find(e => e.id === selectedEmailId);
+  if (!email) return;
+  if (primaryContacts[email.from]) {
+    removePrimaryContact(email.from);
+  } else {
+    addPrimaryContact(email.from, email.fromName, 'Primary');
+  }
+  updateVipDetailButton(email);
+}
+
+function updateVipDetailButton(email) {
+  const btn = document.getElementById('vip-toggle-btn');
+  if (!btn || !email) return;
+  const isVip = !!primaryContacts[email.from];
+  btn.className = isVip ? 'vip-btn active' : 'vip-btn';
+  btn.innerHTML = isVip ? '★ primary contact' : '★ add to primary contacts';
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', e => {
+  const modal = document.getElementById('vip-modal');
+  if (e.target === modal) closeVipModal();
+});
 
 /* ═══════════════════════════════════════════════════════
    UTILS
