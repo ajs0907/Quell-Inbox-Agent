@@ -319,7 +319,7 @@
     border-radius: 8px; padding: 10px 12px;
   }
   .card-label {
-    font-size: 9px; color: var(--text3); letter-spacing: .12em;
+    font-size: 9px; color: var(--text2); letter-spacing: .12em;
     text-transform: uppercase; margin-bottom: 6px; font-weight: 500;
   }
   .card-value { font-size: 12px; line-height: 1.4; }
@@ -433,6 +433,48 @@
   .loading-bar { width: 200px; height: 1px; background: var(--border2); border-radius: 1px; overflow: hidden; }
   .loading-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: loadfill 1.5s ease forwards; }
   @keyframes loadfill { from{width:0} to{width:100%} }
+
+  /* Daily briefing card */
+  #briefing-card {
+    display: none; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #0b1020 0%, #080c18 100%);
+    padding: 16px 20px; animation: fadeUp .3s ease; flex-shrink: 0;
+  }
+  #briefing-card.visible { display: block; }
+  .briefing-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .briefing-title { font-size: 10px; color: var(--accent); letter-spacing: .12em; text-transform: uppercase; font-weight: 500; }
+  .briefing-dismiss { background: transparent; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 0; }
+  .briefing-dismiss:hover { color: var(--text2); }
+  .briefing-text { font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .briefing-stats { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .briefing-stat { font-size: 10px; padding: 3px 9px; border-radius: 4px; border: 1px solid; letter-spacing: .03em; }
+  .briefing-generating { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--accent); animation: pulse 1.2s ease infinite; }
+
+  /* Batch action bar */
+  #batch-bar { display: none; align-items: center; justify-content: space-between; padding: 7px 14px; background: var(--accent-dim); border-bottom: 1px solid #1c2848; flex-shrink: 0; gap: 8px; }
+  #batch-bar.visible { display: flex; }
+  .batch-count { font-size: 11px; color: var(--accent); }
+  .batch-actions { display: flex; gap: 6px; }
+  .batch-btn { background: transparent; border: 1px solid #1c2848; border-radius: 4px; padding: 4px 10px; font-size: 10px; color: var(--text2); cursor: pointer; font-family: inherit; transition: all .15s; }
+  .batch-btn:hover { color: var(--text); border-color: var(--accent); }
+  .batch-btn.danger { color: #f87171; border-color: #3a1010; }
+  .batch-btn.danger:hover { border-color: #f87171; }
+
+  /* Checkbox in rows */
+  .row-check { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--border2); background: transparent; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all .12s; margin-right: 7px; margin-top: 1px; }
+  .row-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; font-size: 8px; }
+  .email-row-inner { display: flex; align-items: flex-start; }
+  .email-row-body { flex: 1; min-width: 0; }
+
+  /* Spam */
+  .spam-badge { font-size: 8px; color: #475569; background: #0d1220; border: 1px solid #1e2535; border-radius: 3px; padding: 1px 5px; }
+  #spam-toggle { font-size: 10px; color: var(--text3); padding: 8px 14px; border-top: 1px solid var(--border); cursor: pointer; text-align: center; letter-spacing: .04em; transition: color .12s; flex-shrink: 0; }
+  #spam-toggle:hover { color: var(--text2); }
+
+  /* Sort bar */
+  #sort-bar { font-size: 9px; color: var(--text3); padding: 5px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; letter-spacing: .05em; }
+  #sort-bar span { color: var(--accent); }
+
 </style>
 </head>
 <body>
@@ -520,16 +562,47 @@
   <div id="main-layout">
     <!-- INBOX PANEL -->
     <div id="inbox-panel">
+      <!-- Briefing card -->
+      <div id="briefing-card">
+        <div class="briefing-header">
+          <div class="briefing-title">✦ daily briefing</div>
+          <button class="briefing-dismiss" onclick="document.getElementById('briefing-card').classList.remove('visible')">×</button>
+        </div>
+        <div id="briefing-body" class="briefing-generating">
+          <div class="spinner" style="width:10px;height:10px;border-width:1.5px;border-color:#7c9ef833;border-top-color:#7c9ef8"></div>
+          Generating your briefing…
+        </div>
+      </div>
+
       <div id="filter-bar">
         <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
         <button class="filter-btn" onclick="setFilter('Critical',this)">Critical</button>
         <button class="filter-btn" onclick="setFilter('High',this)">High</button>
         <button class="filter-btn" onclick="setFilter('Medium',this)">Medium</button>
         <button class="filter-btn" onclick="setFilter('Low',this)">Low</button>
-        <button class="filter-btn" onclick="setFilter('Opportunity',this)">◎ Opportunities</button>
-        <button class="filter-btn" onclick="setFilter('Deadlines',this)">⏱ Deadlines</button>
+        <button class="filter-btn" onclick="setFilter('Opportunity',this)">◎ Opps</button>
+        <button class="filter-btn" onclick="setFilter('Deadlines',this)">⏱ Due</button>
+        <button class="filter-btn" onclick="setFilter('Spam',this)">✕ Spam</button>
       </div>
+
+      <!-- Sort bar -->
+      <div id="sort-bar">
+        <span>sorted by <span>urgency</span></span>
+        <span id="batch-select-all" onclick="toggleSelectAll()" style="cursor:pointer;color:var(--text3);letter-spacing:.04em">select all</span>
+      </div>
+
+      <!-- Batch action bar -->
+      <div id="batch-bar">
+        <span class="batch-count" id="batch-count">0 selected</span>
+        <div class="batch-actions">
+          <button class="batch-btn" onclick="batchTriage()">▶ triage selected</button>
+          <button class="batch-btn" onclick="batchDismiss()">✕ dismiss</button>
+          <button class="batch-btn" onclick="clearSelection()">clear</button>
+        </div>
+      </div>
+
       <div id="email-list"></div>
+      <div id="spam-toggle" onclick="toggleSpamView()" style="display:none"></div>
     </div>
 
     <!-- DETAIL PANEL -->
@@ -571,7 +644,7 @@
             </div>
             <div class="triage-card">
               <div class="card-label">Reason</div>
-              <div class="card-value" style="font-size:10px;color:#666;line-height:1.5" id="d-reason"></div>
+              <div class="card-value" style="font-size:11px;color:var(--text2);line-height:1.6" id="d-reason"></div>
             </div>
           </div>
 
@@ -611,7 +684,6 @@
     </div>
   </div>
 
-</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -632,6 +704,9 @@ let accessToken = null;
 let isDemoMode = false;
 let replyOpen = false;
 let replyText = '';
+let selectedIds = new Set();
+let showSpam = false;
+let briefingGenerated = false;
 
 /* ═══════════════════════════════════════════════════════
    DEMO DATA
@@ -685,6 +760,20 @@ const DEMO_EMAILS = [
     snippet: 'Today\'s top stories: OpenAI releases o3 reasoning model, Rust 2024 stabilized...',
     body: 'TLDR Newsletter — Monday, October 14, 2024\n\n🤖 AI\nOpenAI releases o3 reasoning model with dramatically improved math benchmarks.\n\n🦀 Languages\nRust 2024 edition officially stabilized with new async trait syntax.\n\n☸️ Infrastructure\nKubernetes 1.31 released with new storage APIs.',
     date: 'Oct 14', read: true,
+  },
+  {
+    id: 'd8', from: 'deals@shopify-partner.com', fromName: 'Shopify Deals',
+    subject: '🔥 FLASH SALE: 60% off all themes this weekend only!',
+    snippet: 'Don\'t miss our biggest sale of the year! 60% off premium themes, expires Sunday...',
+    body: 'FLASH SALE — This weekend only!\n\n60% OFF all premium Shopify themes\nUse code: FLASH60 at checkout\n\nOver 200 themes included. Offer expires Sunday midnight.\n\nShop now → shopify-partner.com/themes\n\nUnsubscribe | View in browser',
+    date: 'Oct 14', read: true,
+  },
+  {
+    id: 'd9', from: 'noreply@linkedin.com', fromName: 'LinkedIn',
+    subject: 'You appeared in 47 searches this week',
+    snippet: 'Your profile is getting noticed! See who searched for you and boost your visibility...',
+    body: 'Hi,\n\nYour LinkedIn profile appeared in 47 searches this week!\n\nUpgrade to Premium to see who\'s searching for you and get 5x more profile views.\n\nStart your free 30-day Premium trial →\n\nLinkedIn | Unsubscribe',
+    date: 'Oct 13', read: true,
   },
 ];
 
@@ -853,7 +942,20 @@ function showApp(demo) {
   document.getElementById('main-header').style.display = 'flex';
   document.getElementById('main-layout').style.display = 'flex';
   document.getElementById('config-bar').style.display = demo ? 'flex' : 'none';
-  renderEmailList();
+  briefingGenerated = false;
+  autoTriageAndBrief();
+}
+
+async function autoTriageAndBrief() {
+  // Start briefing generation immediately (uses snippets from untriaged emails)
+  generateDailyBriefing();
+  // Triage all emails in background
+  const untriaged = emails.filter(e => !e.triage);
+  for (const email of untriaged) {
+    await triageEmail(email.id);
+  }
+  // Refresh briefing with full triage data
+  if (!briefingGenerated) generateDailyBriefing();
   updateHeaderStats();
 }
 
@@ -885,16 +987,52 @@ const CAT_ICONS = {
   'Other':              { icon:'◇', color:'#64748b' },
 };
 
+const URGENCY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+function isSpam(email) {
+  return email.triage?.category === 'Spam / Ads';
+}
+
+function sortByUrgency(arr) {
+  return [...arr].sort((a, b) => {
+    const ao = a.triage ? (URGENCY_ORDER[a.triage.urgency] ?? 4) : 5;
+    const bo = b.triage ? (URGENCY_ORDER[b.triage.urgency] ?? 4) : 5;
+    return ao - bo;
+  });
+}
+
 function getVisibleEmails() {
-  if (currentFilter === 'All') return emails;
-  if (currentFilter === 'Opportunity') return emails.filter(e => e.triage?.opportunities?.length > 0);
-  if (currentFilter === 'Deadlines') return emails.filter(e => e.triage?.due_dates?.length > 0);
-  return emails.filter(e => e.triage?.urgency === currentFilter);
+  let base = emails;
+  if (currentFilter === 'Spam') return base.filter(e => isSpam(e));
+  base = base.filter(e => !isSpam(e));
+  if (currentFilter === 'All') return sortByUrgency(base);
+  if (currentFilter === 'Opportunity') return sortByUrgency(base.filter(e => e.triage?.opportunities?.length > 0));
+  if (currentFilter === 'Deadlines') return sortByUrgency(base.filter(e => e.triage?.due_dates?.length > 0));
+  return sortByUrgency(base.filter(e => e.triage?.urgency === currentFilter));
 }
 
 function renderEmailList() {
   const list = document.getElementById('email-list');
   const visible = getVisibleEmails();
+  const spamCount = emails.filter(e => isSpam(e)).length;
+
+  // Spam toggle
+  const spamToggle = document.getElementById('spam-toggle');
+  if (spamCount > 0 && currentFilter !== 'Spam') {
+    spamToggle.style.display = 'block';
+    spamToggle.textContent = `${spamCount} spam / ad email${spamCount > 1 ? 's' : ''} hidden — show`;
+  } else {
+    spamToggle.style.display = 'none';
+  }
+
+  // Batch bar
+  const batchBar = document.getElementById('batch-bar');
+  if (selectedIds.size > 0) {
+    batchBar.classList.add('visible');
+    document.getElementById('batch-count').textContent = `${selectedIds.size} selected`;
+  } else {
+    batchBar.classList.remove('visible');
+  }
 
   if (visible.length === 0) {
     list.innerHTML = '<div class="empty-list">no emails in this filter</div>';
@@ -903,27 +1041,36 @@ function renderEmailList() {
 
   list.innerHTML = visible.map(email => {
     const isSel = email.id === selectedEmailId;
+    const isChecked = selectedIds.has(email.id);
     const urg = email.triage ? URGENCY_COLORS[email.triage.urgency] : null;
     const hasOpp = email.triage?.opportunities?.length > 0;
     const hasDates = email.triage?.due_dates?.length > 0;
+    const spam = isSpam(email);
 
-    const urgBadge = urg ? `<span class="badge" style="color:${urg.color};background:${urg.bg};border-color:${urg.border}">${email.triage.urgency}</span>` : '';
-    const oppBadge = hasOpp ? `<span class="badge" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎ opp</span>` : '';
+    const urgBadge = urg && !spam ? `<span class="badge" style="color:${urg.color};background:${urg.bg};border-color:${urg.border}">${email.triage.urgency}</span>` : '';
+    const spamBadge = spam ? `<span class="spam-badge">spam / ads</span>` : '';
+    const oppBadge = hasOpp ? `<span class="badge" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎</span>` : '';
     const dateBadge = hasDates ? `<span class="badge" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱</span>` : '';
-    const triagingBadge = email.triaging ? `<span style="font-size:9px;color:#7c9ef8;display:flex;align-items:center;gap:3px"><span class="spinner" style="width:8px;height:8px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8"></span>analyzing</span>` : '';
-    const notTriaged = !email.triage && !email.triaging ? `<span style="font-size:8px;color:#1e1e22">not triaged</span>` : '';
+    const triagingBadge = email.triaging ? `<span style="font-size:9px;color:#7c9ef8;display:flex;align-items:center;gap:3px"><span class="spinner" style="width:8px;height:8px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8"></span></span>` : '';
+    const notTriaged = !email.triage && !email.triaging ? `<span style="font-size:9px;color:var(--text3)">·</span>` : '';
+    const checkEl = `<div class="row-check ${isChecked?'checked':''}" onclick="event.stopPropagation();toggleSelect('${email.id}')">${isChecked?'✓':''}</div>`;
 
     return `<div class="email-row ${isSel?'selected':''}" onclick="selectEmail('${email.id}')">
-      <div class="row-top">
-        <div class="row-from ${email.read?'read':'unread'}">
-          ${!email.read ? '<span class="unread-dot"></span>' : ''}${escHtml(email.fromName)}
+      <div class="email-row-inner">
+        ${checkEl}
+        <div class="email-row-body">
+          <div class="row-top">
+            <div class="row-from ${email.read?'read':'unread'}">
+              ${!email.read ? '<span class="unread-dot"></span>' : ''}${escHtml(email.fromName)}
+            </div>
+            <div class="row-date">${escHtml(email.date)}</div>
+          </div>
+          <div class="row-subject ${email.read?'read':'unread'}">${escHtml(email.subject)}</div>
+          <div class="row-tags">
+            <div class="row-badges">${oppBadge}${dateBadge}${spamBadge}</div>
+            <div style="display:flex;gap:4px;align-items:center">${triagingBadge}${urgBadge}${notTriaged}</div>
+          </div>
         </div>
-        <div class="row-date">${escHtml(email.date)}</div>
-      </div>
-      <div class="row-subject ${email.read?'read':'unread'}">${escHtml(email.subject)}</div>
-      <div class="row-tags">
-        <div class="row-badges">${oppBadge}${dateBadge}</div>
-        <div style="display:flex;gap:4px;align-items:center">${triagingBadge}${urgBadge}${notTriaged}</div>
       </div>
     </div>`;
   }).join('');
@@ -931,9 +1078,54 @@ function renderEmailList() {
 
 function setFilter(filter, btn) {
   currentFilter = filter;
+  selectedIds.clear();
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderEmailList();
+}
+
+function toggleSpamView() {
+  const spamBtn = document.querySelector('.filter-btn[onclick*="Spam"]');
+  if (spamBtn) { setFilter('Spam', spamBtn); }
+}
+
+/* Batch selection */
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  renderEmailList();
+}
+
+function toggleSelectAll() {
+  const visible = getVisibleEmails();
+  if (selectedIds.size === visible.length) {
+    selectedIds.clear();
+  } else {
+    visible.forEach(e => selectedIds.add(e.id));
+  }
+  renderEmailList();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderEmailList();
+}
+
+async function batchTriage() {
+  const ids = [...selectedIds];
+  clearSelection();
+  for (const id of ids) await triageEmail(id);
+}
+
+function batchDismiss() {
+  selectedIds.forEach(id => {
+    const email = emails.find(e => e.id === id);
+    if (email) email.dismissed = true;
+  });
+  emails = emails.filter(e => !e.dismissed);
+  clearSelection();
+  renderEmailList();
+  updateHeaderStats();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -964,15 +1156,21 @@ function renderDetail() {
   document.getElementById('d-date').textContent = email.date;
   document.getElementById('email-body-text').textContent = email.body;
 
-  // Reset reply
+  // Reset reply state for this email
   replyOpen = false;
-  replyText = '';
+  replyText = email.cachedReply || '';
   document.getElementById('reply-body').style.display = 'none';
-  document.getElementById('reply-text').innerHTML = '';
-  document.getElementById('copy-btn').style.display = 'none';
+  document.getElementById('reply-text').innerHTML = replyText ? escHtml(replyText) : '';
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.style.display = replyText ? 'inline-flex' : 'none';
   const draftBtn = document.getElementById('draft-btn');
-  draftBtn.className = 'btn-draft idle';
-  draftBtn.innerHTML = '✦ draft reply';
+  if (replyText) {
+    draftBtn.className = 'btn-draft open';
+    draftBtn.innerHTML = '▼ show draft';
+  } else {
+    draftBtn.className = 'btn-draft idle';
+    draftBtn.innerHTML = '✦ draft reply';
+  }
 
   if (email.triaging) {
     document.getElementById('triage-trigger').style.display = 'none';
@@ -996,7 +1194,7 @@ function renderTriageResults(t) {
 
   document.getElementById('d-urgency').innerHTML = `<span style="color:${urg.color};font-weight:500">${t.urgency}</span>`;
   document.getElementById('d-category').innerHTML = `<span style="color:${cat.color}">${cat.icon} ${t.category}</span>`;
-  document.getElementById('d-reason').textContent = t.reason;
+  document.getElementById('d-reason').textContent = t.reason || 'No reason provided.';
 
   // Deadlines
   const dc = document.getElementById('deadlines-card');
@@ -1187,6 +1385,9 @@ Reply with ONLY the email body text — no subject line, no metadata.`;
       el.innerHTML = escHtml(replyText.slice(0, i)) + (i < replyText.length ? '<span id="reply-cursor">▋</span>' : '');
     }
 
+    // Cache reply so it persists when switching emails
+    const currentEmail = emails.find(e => e.id === selectedEmailId);
+    if (currentEmail) currentEmail.cachedReply = replyText;
     document.getElementById('copy-btn').style.display = 'inline-flex';
     draftBtn.className = 'btn-draft open';
     draftBtn.innerHTML = '▲ hide';
@@ -1211,8 +1412,9 @@ function copyReply() {
    HEADER STATS
 ════════════════════════════════════════════════════════ */
 function updateHeaderStats() {
-  const triaged = emails.filter(e => e.triage);
-  if (triaged.length === 0) {
+  const triaged = emails.filter(e => e.triage && !isSpam(e));
+  const spamCount = emails.filter(e => isSpam(e)).length;
+  if (triaged.length === 0 && spamCount === 0) {
     document.getElementById('header-stats').innerHTML = '';
     return;
   }
@@ -1223,9 +1425,74 @@ function updateHeaderStats() {
   let html = '';
   if (critical > 0) html += `<span class="stat-pill" style="color:#f87171;background:#2d1010;border-color:#7f1d1d">⚠ ${critical} critical</span>`;
   if (deadlines > 0) html += `<span class="stat-pill" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱ ${deadlines} deadline${deadlines>1?'s':''}</span>`;
-  if (opps > 0) html += `<span class="stat-pill" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎ ${opps} opportunit${opps>1?'ies':'y'}</span>`;
-  html += `<span style="font-size:10px;color:#222;margin-left:4px">${triaged.length}/${emails.length} triaged</span>`;
+  if (opps > 0) html += `<span class="stat-pill" style="color:#60a5fa;background:#0a1020;border-color:#1a2a4a">◎ ${opps} opp${opps>1?'s':''}</span>`;
+  if (spamCount > 0) html += `<span class="stat-pill" style="color:#475569;background:#0d1220;border-color:#1e2535">✕ ${spamCount} spam</span>`;
+  html += `<span style="font-size:10px;color:var(--text3);margin-left:4px">${triaged.length}/${emails.filter(e=>!isSpam(e)).length} triaged</span>`;
   document.getElementById('header-stats').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DAILY BRIEFING
+════════════════════════════════════════════════════════ */
+async function generateDailyBriefing() {
+  const card = document.getElementById('briefing-card');
+  const body = document.getElementById('briefing-body');
+  card.classList.add('visible');
+
+  const triaged = emails.filter(e => e.triage && !isSpam(e));
+  const critical = triaged.filter(e => e.triage?.urgency === 'Critical');
+  const high = triaged.filter(e => e.triage?.urgency === 'High');
+  const deadlines = triaged.filter(e => e.triage?.due_dates?.length > 0);
+  const opps = triaged.filter(e => e.triage?.opportunities?.length > 0);
+  const spamCount = emails.filter(e => isSpam(e)).length;
+  const total = emails.filter(e => !isSpam(e)).length;
+
+  // Build a context summary for Claude
+  const summary = emails.slice(0, 10).map(e =>
+    `- ${e.fromName}: "${e.subject}" ${e.triage ? `[${e.triage.urgency}, ${e.triage.category}]` : '[not yet triaged]'}`
+  ).join('\n');
+
+  const prompt = `You are an inbox assistant. Write a concise, human daily briefing (2-3 sentences max) for someone looking at their inbox. Be specific and actionable.
+
+Inbox snapshot:
+Total emails: ${total}
+Critical: ${critical.length}, High: ${high.length}
+Emails with deadlines: ${deadlines.length}
+Opportunities identified: ${opps.length}
+Spam/ads filtered: ${spamCount}
+
+Top emails:
+${summary}
+
+Write a natural, warm briefing like a smart assistant would. Mention the most important things to address today. Do NOT use bullet points — just flowing prose. Keep it under 60 words.`;
+
+  try {
+    const res = await fetch(ANTHROPIC_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    briefingGenerated = true;
+
+    // Build stats row
+    let statsHtml = '';
+    if (critical.length) statsHtml += `<span class="briefing-stat" style="color:#f87171;background:#2d1010;border-color:#7f1d1d">⚠ ${critical.length} critical</span>`;
+    if (deadlines.length) statsHtml += `<span class="briefing-stat" style="color:#fbbf24;background:#241c08;border-color:#6b3a0a">⏱ ${deadlines.length} deadline${deadlines.length>1?'s':''}</span>`;
+    if (opps.length) statsHtml += `<span class="briefing-stat" style="color:#7c9ef8;background:#0d1428;border-color:#1c2848">◎ ${opps.length} opp${opps.length>1?'s':''}</span>`;
+    if (spamCount) statsHtml += `<span class="briefing-stat" style="color:#475569;background:#0d1220;border-color:#1e2535">✕ ${spamCount} spam hidden</span>`;
+
+    body.className = '';
+    body.innerHTML = `<div class="briefing-text">${escHtml(text)}</div>${statsHtml ? '<div class="briefing-stats">' + statsHtml + '</div>' : ''}`;
+  } catch(e) {
+    body.className = 'briefing-text';
+    body.textContent = 'Could not generate briefing.';
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
