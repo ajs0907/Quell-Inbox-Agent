@@ -434,6 +434,52 @@
   .loading-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: loadfill 1.5s ease forwards; }
   @keyframes loadfill { from{width:0} to{width:100%} }
 
+  /* Dashboard */
+  .dash-bar-row { display:flex; align-items:center; gap:8px; }
+  .dash-bar-label { font-size:10px; color:var(--text2); width:60px; flex-shrink:0; }
+  .dash-bar-track { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .dash-bar-fill { height:100%; border-radius:2px; transition:width 1s ease; width:0; }
+  .dash-bar-count { font-size:10px; color:var(--text3); width:24px; text-align:right; flex-shrink:0; }
+
+  .dash-cat-row { display:flex; align-items:center; gap:6px; }
+  .dash-cat-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .dash-cat-name { font-size:10px; color:var(--text2); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-cat-n { font-size:10px; color:var(--text3); }
+
+  .dash-attention-row {
+    display:flex; align-items:center; gap:8px;
+    padding:7px 10px; background:var(--bg2);
+    border:1px solid var(--border); border-radius:6px;
+    cursor:pointer; transition:border-color .15s;
+  }
+  .dash-attention-row:hover { border-color:var(--border2); }
+  .dash-attention-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .dash-attention-subject { font-size:11px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-attention-from { font-size:10px; color:var(--text3); flex-shrink:0; }
+
+  /* Thread grouping */
+  .thread-group { border-bottom:1px solid #0d1018; }
+  .thread-header { position:relative; }
+  .thread-expander {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:4px 14px 4px 34px;
+    background:var(--bg2); cursor:pointer;
+    border-top:1px solid #0d1018;
+  }
+  .thread-expander:hover { background:#0c1020; }
+  .thread-count-badge {
+    font-size:9px; color:var(--text3);
+    background:var(--bg3); border:1px solid var(--border2);
+    border-radius:3px; padding:1px 6px; letter-spacing:.04em;
+  }
+  .thread-messages { display:none; }
+  .thread-messages.open { display:block; }
+  .thread-child { padding-left:20px; border-left:2px solid var(--border); }
+
+  /* Weekly digest */
+  #digest-output p { margin-bottom:8px; }
+  #digest-output p:last-child { margin-bottom:0; }
+
   /* Primary contacts */
   .vip-btn {
     background: transparent; border: 1px solid var(--border2);
@@ -690,8 +736,59 @@
     <!-- DETAIL PANEL -->
     <div id="detail-panel">
       <div id="detail-empty">
-        <div class="big">@</div>
-        <div style="font-size:11px;">select an email to triage</div>
+        <div id="dashboard" style="padding:28px 30px;animation:fadeUp .3s ease">
+
+          <!-- Inbox Health Score -->
+          <div id="dash-health-row" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px">
+            <div>
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">Inbox Health</div>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <div id="dash-score" style="font-family:'DM Serif Display',serif;font-size:52px;line-height:1;color:#e0eaf8">—</div>
+                <div id="dash-score-label" style="font-size:11px;color:var(--text3);margin-bottom:6px"></div>
+              </div>
+            </div>
+            <div id="dash-score-ring" style="width:64px;height:64px;position:relative;flex-shrink:0">
+              <svg width="64" height="64" style="transform:rotate(-90deg)">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#161c2a" stroke-width="5"/>
+                <circle id="dash-ring-arc" cx="32" cy="32" r="26" fill="none" stroke="#7c9ef8" stroke-width="5"
+                  stroke-dasharray="163" stroke-dashoffset="163" stroke-linecap="round"
+                  style="transition:stroke-dashoffset 1s ease,stroke .5s ease"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Urgency breakdown bars -->
+          <div style="margin-bottom:24px">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Urgency Breakdown</div>
+            <div id="dash-urgency-bars" style="display:flex;flex-direction:column;gap:7px"></div>
+          </div>
+
+          <!-- Category donut + top senders -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+            <div>
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Top Categories</div>
+              <div id="dash-categories" style="display:flex;flex-direction:column;gap:5px"></div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Top Senders</div>
+              <div id="dash-senders" style="display:flex;flex-direction:column;gap:5px"></div>
+            </div>
+          </div>
+
+          <!-- Attention needed -->
+          <div style="margin-bottom:24px">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Needs Attention</div>
+            <div id="dash-attention" style="display:flex;flex-direction:column;gap:5px"></div>
+            <div id="dash-no-attention" style="font-size:11px;color:var(--text3);display:none">All clear — nothing urgent right now.</div>
+          </div>
+
+          <!-- Weekly digest button -->
+          <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Weekly Digest</div>
+            <button id="digest-btn" onclick="generateWeeklyDigest()" class="btn-ghost" style="font-size:10px;padding:5px 12px">✦ generate digest</button>
+          </div>
+          <div id="digest-output" style="display:none;margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;animation:fadeUp .2s ease"></div>
+        </div>
       </div>
       <div id="detail-content" style="display:none">
         <div class="detail-header">
@@ -1096,20 +1193,19 @@ function showApp(demo) {
   document.getElementById('main-layout').style.display = 'flex';
   document.getElementById('config-bar').style.display = demo ? 'flex' : 'none';
   briefingGenerated = false;
+  renderDashboard();
   autoTriageAndBrief();
 }
 
 async function autoTriageAndBrief() {
-  // Start briefing generation immediately (uses snippets from untriaged emails)
   generateDailyBriefing();
-  // Triage all emails in background
   const untriaged = emails.filter(e => !e.triage);
   for (const email of untriaged) {
     await triageEmail(email.id);
   }
-  // Refresh briefing with full triage data
   if (!briefingGenerated) generateDailyBriefing();
   updateHeaderStats();
+  renderDashboard();
 }
 
 function setUserInfo(email) {
@@ -1295,7 +1391,7 @@ function selectEmail(id) {
 
 function clearDetail() {
   selectedEmailId = null;
-  document.getElementById('detail-empty').style.display = 'flex';
+  document.getElementById('detail-empty').style.display = 'block';
   document.getElementById('detail-content').style.display = 'none';
   renderEmailList();
 }
@@ -1627,6 +1723,8 @@ function updateHeaderStats() {
   if (spamCount > 0) html += `<span class="stat-pill" style="color:#475569;background:#0d1220;border-color:#1e2535">✕ ${spamCount} spam</span>`;
   html += `<span style="font-size:10px;color:var(--text3);margin-left:4px">${triaged.length}/${emails.filter(e=>!isSpam(e)).length} triaged</span>`;
   document.getElementById('header-stats').innerHTML = html;
+  // Refresh dashboard if visible
+  if (document.getElementById('detail-empty').style.display !== 'none') renderDashboard();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1681,6 +1779,208 @@ Write a natural, warm briefing like a smart assistant would. Mention the most im
     body.className = 'briefing-text';
     body.textContent = 'Could not generate briefing.';
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATS DASHBOARD
+════════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const triaged = emails.filter(e => e.triage && !isSpam(e));
+  const total = emails.filter(e => !isSpam(e)).length;
+  if (total === 0) return;
+
+  // ── Health score (0-100) ──
+  const spam = emails.filter(e => isSpam(e)).length;
+  const critical = triaged.filter(e => e.triage.urgency === 'Critical').length;
+  const high = triaged.filter(e => e.triage.urgency === 'High').length;
+  const medium = triaged.filter(e => e.triage.urgency === 'Medium').length;
+  const low = triaged.filter(e => e.triage.urgency === 'Low').length;
+  const untriaged = total - triaged.length;
+
+  // Score penalizes critical/high emails and spam
+  let score = 100;
+  score -= critical * 12;
+  score -= high * 5;
+  score -= spam * 2;
+  score -= untriaged * 1;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  const scoreEl = document.getElementById('dash-score');
+  const labelEl = document.getElementById('dash-score-label');
+  const arcEl = document.getElementById('dash-ring-arc');
+  if (!scoreEl) return;
+
+  scoreEl.textContent = score;
+  const scoreColor = score >= 80 ? '#4ade80' : score >= 60 ? '#fbbf24' : score >= 40 ? '#fb923c' : '#f87171';
+  scoreEl.style.color = scoreColor;
+  labelEl.textContent = score >= 80 ? 'healthy' : score >= 60 ? 'moderate' : score >= 40 ? 'busy' : 'overloaded';
+  labelEl.style.color = scoreColor;
+  arcEl.style.stroke = scoreColor;
+  // Animate ring: circumference = 2π×26 ≈ 163
+  setTimeout(() => {
+    arcEl.style.strokeDashoffset = 163 - (163 * score / 100);
+  }, 100);
+
+  // ── Urgency bars ──
+  const urgData = [
+    { label:'Critical', count:critical, color:'#f87171' },
+    { label:'High',     count:high,     color:'#fb923c' },
+    { label:'Medium',   count:medium,   color:'#fbbf24' },
+    { label:'Low',      count:low,      color:'#4ade80' },
+  ];
+  const maxUrg = Math.max(...urgData.map(u => u.count), 1);
+  document.getElementById('dash-urgency-bars').innerHTML = urgData.map(u => `
+    <div class="dash-bar-row">
+      <div class="dash-bar-label">${u.label}</div>
+      <div class="dash-bar-track">
+        <div class="dash-bar-fill" style="background:${u.color};width:0" data-target="${Math.round(u.count/maxUrg*100)}%"></div>
+      </div>
+      <div class="dash-bar-count">${u.count}</div>
+    </div>`).join('');
+  // Animate bars after paint
+  setTimeout(() => {
+    document.querySelectorAll('.dash-bar-fill').forEach(el => {
+      el.style.width = el.dataset.target;
+    });
+  }, 120);
+
+  // ── Top categories ──
+  const catCounts = {};
+  triaged.forEach(e => { catCounts[e.triage.category] = (catCounts[e.triage.category]||0)+1; });
+  const catColors = ['#7c9ef8','#c084fc','#2dd4bf','#fb923c','#f472b6','#4ade80','#fbbf24'];
+  const topCats = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('dash-categories').innerHTML = topCats.length
+    ? topCats.map(([name,n],i) => `
+        <div class="dash-cat-row">
+          <div class="dash-cat-dot" style="background:${catColors[i%catColors.length]}"></div>
+          <div class="dash-cat-name">${escHtml(name)}</div>
+          <div class="dash-cat-n">${n}</div>
+        </div>`).join('')
+    : '<div style="font-size:10px;color:var(--text3)">Triage emails to see categories</div>';
+
+  // ── Top senders ──
+  const senderCounts = {};
+  emails.filter(e=>!isSpam(e)).forEach(e => {
+    senderCounts[e.fromName||e.from] = (senderCounts[e.fromName||e.from]||0)+1;
+  });
+  const topSenders = Object.entries(senderCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('dash-senders').innerHTML = topSenders.map(([name,n]) => `
+    <div class="dash-cat-row">
+      <div class="dash-cat-dot" style="background:var(--border2)"></div>
+      <div class="dash-cat-name">${escHtml(name)}</div>
+      <div class="dash-cat-n">${n}</div>
+    </div>`).join('');
+
+  // ── Needs attention (Critical + High + unread deadlines) ──
+  const attention = triaged
+    .filter(e => e.triage.urgency === 'Critical' || e.triage.urgency === 'High' || e.triage.due_dates?.length > 0)
+    .sort((a,b) => (URGENCY_ORDER[a.triage.urgency]??4) - (URGENCY_ORDER[b.triage.urgency]??4))
+    .slice(0, 5);
+  const attEl = document.getElementById('dash-attention');
+  const noAttEl = document.getElementById('dash-no-attention');
+  if (attention.length === 0) {
+    attEl.innerHTML = '';
+    noAttEl.style.display = 'block';
+  } else {
+    noAttEl.style.display = 'none';
+    const urgColors = { Critical:'#f87171', High:'#fb923c', Medium:'#fbbf24', Low:'#4ade80' };
+    attEl.innerHTML = attention.map(e => `
+      <div class="dash-attention-row" onclick="selectEmailFromDash('${e.id}')">
+        <div class="dash-attention-dot" style="background:${urgColors[e.triage.urgency]||'#4a5568'}"></div>
+        <div class="dash-attention-subject">${escHtml(e.subject)}</div>
+        <div class="dash-attention-from">${escHtml(e.fromName||e.from)}</div>
+      </div>`).join('');
+  }
+}
+
+function selectEmailFromDash(id) {
+  selectedEmailId = id;
+  renderEmailList();
+  renderDetail();
+  document.getElementById('detail-empty').style.display = 'none';
+  document.getElementById('detail-content').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════
+   THREAD GROUPING
+════════════════════════════════════════════════════════ */
+function groupEmailsByThread(emailList) {
+  const threads = {};
+  const order = [];
+  emailList.forEach(e => {
+    // Use subject (stripped of Re:/Fwd:) as thread key
+    const key = e.subject.replace(/^(re|fwd|fw):\s*/i, '').trim().toLowerCase();
+    if (!threads[key]) { threads[key] = []; order.push(key); }
+    threads[key].push(e);
+  });
+  return order.map(k => threads[k]);
+}
+
+let expandedThreads = new Set();
+
+function toggleThread(key) {
+  if (expandedThreads.has(key)) expandedThreads.delete(key);
+  else expandedThreads.add(key);
+  renderEmailList();
+}
+
+/* ═══════════════════════════════════════════════════════
+   WEEKLY DIGEST
+════════════════════════════════════════════════════════ */
+async function generateWeeklyDigest() {
+  const btn = document.getElementById('digest-btn');
+  const out = document.getElementById('digest-output');
+  btn.innerHTML = '<span class="spinner" style="width:9px;height:9px;border-width:1.5px;border-color:#7c9ef822;border-top-color:#7c9ef8;display:inline-block;border-radius:50%;animation:spin .7s linear infinite"></span> generating…';
+  btn.disabled = true;
+  out.style.display = 'none';
+
+  const triaged = emails.filter(e => e.triage && !isSpam(e));
+  if (triaged.length === 0) {
+    out.innerHTML = '<span style="color:var(--text3)">No triaged emails yet — triage some emails first.</span>';
+    out.style.display = 'block';
+    btn.innerHTML = '✦ generate digest';
+    btn.disabled = false;
+    return;
+  }
+
+  const critical = triaged.filter(e => e.triage.urgency === 'Critical');
+  const high = triaged.filter(e => e.triage.urgency === 'High');
+  const opps = triaged.filter(e => e.triage.opportunities?.length > 0);
+  const deadlines = triaged.filter(e => e.triage.due_dates?.length > 0);
+
+  const summary = triaged.slice(0, 20).map(e =>
+    `- [${e.triage.urgency}] From ${e.fromName||e.from}: "${e.subject}" — ${e.triage.reason}`
+  ).join('\n');
+
+  const prompt = `You are an executive assistant. Write a weekly inbox digest report based on these emails.
+
+INBOX DATA:
+Total emails: ${triaged.length}
+Critical: ${critical.length}, High: ${high.length}
+Emails with deadlines: ${deadlines.length}
+Opportunities identified: ${opps.length}
+
+SAMPLE EMAILS:
+${summary}
+
+Write a concise weekly digest with 3 short sections:
+1. "This Week's Highlights" — 2-3 sentences on the most important things
+2. "Action Required" — bullet list of the top 3-5 emails needing a response
+3. "Opportunities" — 1-2 sentences on any notable leads, invitations, or partnerships
+
+Keep total length under 150 words. Be direct and useful, not generic.`;
+
+  try {
+    const text = await callLlama(prompt, 400);
+    out.innerHTML = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+    out.style.display = 'block';
+    btn.innerHTML = '↻ regenerate';
+  } catch(e) {
+    out.innerHTML = '<span style="color:#f87171">Error generating digest: ' + escHtml(e.message) + '</span>';
+    out.style.display = 'block';
+    btn.innerHTML = '✦ generate digest';
+  }
+  btn.disabled = false;
 }
 
 /* ═══════════════════════════════════════════════════════
