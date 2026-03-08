@@ -212,11 +212,11 @@
   .btn-ghost {
     background: transparent; color: var(--text3);
     border: 1px solid var(--border2); border-radius: 5px;
-    padding: 6px 12px; font-size: 10px;
+    padding: 5px 11px; font-size: 10px;
     font-family: inherit; cursor: pointer;
     letter-spacing: .04em; transition: all .15s;
   }
-  .btn-ghost:hover { color: var(--text2); border-color: #333; }
+  .btn-ghost:hover { color: var(--text2); border-color: #2a3550; background: #0a0e18; }
 
   /* Main layout */
   #main-layout {
@@ -227,91 +227,119 @@
 
   /* Inbox panel */
   #inbox-panel {
-    width: 340px;
+    width: 320px;
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     height: 100%;
+    background: var(--bg2);
   }
 
   #filter-bar {
     display: flex;
     border-bottom: 1px solid var(--border);
-    padding: 0 10px;
+    padding: 0 8px;
     overflow-x: auto;
     flex-shrink: 0;
+    background: var(--bg2);
   }
   #filter-bar::-webkit-scrollbar { height: 0; }
 
   .filter-btn {
     background: transparent; border: none;
     border-bottom: 2px solid transparent;
-    color: var(--text3); font-size: 11px;
-    padding: 9px 10px; cursor: pointer;
+    color: var(--text3); font-size: 10px;
+    padding: 9px 9px; cursor: pointer;
     font-family: inherit; white-space: nowrap;
-    letter-spacing: .03em; transition: color .12s;
+    letter-spacing: .04em; transition: color .12s;
     font-weight: 400;
   }
   .filter-btn:hover { color: var(--text2); }
-  .filter-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .filter-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
 
   #email-list { overflow-y: auto; flex: 1; }
 
   .email-row {
-    padding: 12px 14px;
-    border-bottom: 1px solid #0d1018;
+    padding: 11px 14px;
+    border-bottom: 1px solid #0a0d14;
     cursor: pointer;
     border-left: 2px solid transparent;
-    transition: all .1s;
+    transition: background .1s, border-color .1s;
+    background: var(--bg2);
   }
-  .email-row:hover { background: #0c1020; }
-  .email-row.selected { background: #0c1020; border-left-color: var(--accent); }
+  .email-row:hover { background: #0d1220; }
+  .email-row.selected { background: #0d1424; border-left-color: var(--accent); }
 
-  .row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-  .row-from { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 185px; }
+  .row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 6px; }
+  .row-from { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
   .row-from.unread { font-weight: 600; color: var(--text); }
-  .row-from.read { color: #444; }
+  .row-from.read { color: #3a4a5e; }
   .row-date { font-size: 9px; color: var(--text3); flex-shrink: 0; }
-  .row-subject { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 5px; }
-  .row-subject.unread { color: #a0a098; font-weight: 500; }
-  .row-subject.read { color: #555; }
+  .row-subject { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 5px; line-height: 1.4; }
+  .row-subject.unread { color: #8a9ab8; font-weight: 500; }
+  .row-subject.read { color: #2e3a4a; }
   .row-tags { display: flex; align-items: center; justify-content: space-between; }
-  .row-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+  .row-badges { display: flex; gap: 3px; flex-wrap: wrap; }
 
   .unread-dot {
-    display: inline-block; width: 5px; height: 5px;
+    display: inline-block; width: 4px; height: 4px;
     border-radius: 50%; background: var(--accent);
-    margin-right: 5px; vertical-align: middle;
+    margin-right: 4px; vertical-align: middle; flex-shrink: 0;
   }
 
   .badge {
     font-size: 8px; border-radius: 3px;
-    padding: 1px 5px; letter-spacing: .06em;
-    border: 1px solid; white-space: nowrap;
+    padding: 1px 5px; letter-spacing: .05em;
+    border: 1px solid; white-space: nowrap; font-weight: 500;
   }
 
   /* Detail panel */
   #detail-panel {
     flex: 1;
-    overflow-y: auto;
     background: var(--bg);
     display: flex;
     flex-direction: column;
-  }
-  #detail-panel > #detail-empty {
-    flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
+  /* Detail topbar */
+  #detail-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; height: 44px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; gap: 12px;
+    background: var(--bg);
+  }
+  #detail-topbar-title {
+    font-size: 11px; color: var(--text2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; letter-spacing: .02em;
+  }
+  #dash-toggle-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: 5px; padding: 4px 10px;
+    font-size: 10px; color: var(--text3);
+    font-family: inherit; cursor: pointer;
+    letter-spacing: .04em; transition: all .15s;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  #dash-toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
+  #dash-toggle-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
   #detail-empty {
-    height: 100%;
+    flex: 1;
     display: block;
     overflow-y: auto;
     color: var(--text);
   }
 
-  #detail-content { max-width: 680px; padding: 26px 30px; animation: fadeUp .2s ease; }
+  #detail-content {
+    flex: 1; overflow-y: auto;
+    max-width: 700px; padding: 26px 30px;
+    animation: fadeUp .2s ease;
+  }
 
   .detail-header { margin-bottom: 20px; }
   .detail-subject { font-family: 'DM Serif Display', serif; font-size: 19px; font-weight: 600; color: #e0eaf8; line-height: 1.35; margin-bottom: 8px; }
@@ -319,13 +347,16 @@
   .detail-meta span { color: var(--text2); }
 
   /* Triage cards */
-  .triage-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 7px; margin-bottom: 8px; }
+  .triage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .triage-card-reason { grid-column: 1 / -1; }
   .triage-card {
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 13px;
+    transition: border-color .15s;
   }
+  .triage-card:hover { border-color: var(--border2); }
   .card-label {
-    font-size: 9px; color: var(--text2); letter-spacing: .12em;
+    font-size: 9px; color: var(--text3); letter-spacing: .12em;
     text-transform: uppercase; margin-bottom: 6px; font-weight: 500;
   }
   .card-value { font-size: 12px; line-height: 1.4; }
@@ -358,14 +389,16 @@
 
   /* Reply section */
   #reply-section {
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 7px; overflow: hidden; margin-bottom: 8px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-bottom: 10px;
+    transition: border-color .15s;
   }
+  #reply-section:hover { border-color: var(--border2); }
   #reply-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 13px;
+    padding: 10px 14px;
   }
-  #reply-label { font-size: 10px; color: var(--text3); letter-spacing: .12em; text-transform: uppercase; }
+  #reply-label { font-size: 9px; color: var(--text3); letter-spacing: .12em; text-transform: uppercase; font-weight: 500; }
   #reply-actions { display: flex; gap: 6px; }
 
   .btn-copy {
@@ -735,8 +768,8 @@
       </div>
       <button class="btn-primary" id="triage-all-btn" onclick="triageAll()">▶ triage all</button>
       <button class="btn-ghost" onclick="openVipModal()">★ contacts</button>
-      <button class="btn-ghost" onclick="refreshInbox()">↻ refresh</button>
-      <button class="btn-ghost" onclick="signOut()" style="color:#333;">sign out</button>
+      <button class="btn-ghost" onclick="refreshInbox()">↻</button>
+      <button class="btn-ghost" onclick="signOut()" style="color:#2a3548;font-size:9px;padding:5px 9px;">sign out</button>
     </div>
   </header>
 
@@ -756,24 +789,21 @@
         </div>
       </div>
 
-      <div id="filter-bar" style="display:flex;align-items:center;justify-content:space-between;padding-right:8px">
-        <div style="display:flex;overflow-x:auto">
+      <div id="filter-bar">
         <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
-        <button class="filter-btn" onclick="setFilter('Critical',this)">Critical</button>
+        <button class="filter-btn" onclick="setFilter('Critical',this)">⚠ Critical</button>
         <button class="filter-btn" onclick="setFilter('High',this)">High</button>
         <button class="filter-btn" onclick="setFilter('Medium',this)">Medium</button>
         <button class="filter-btn" onclick="setFilter('Low',this)">Low</button>
         <button class="filter-btn" onclick="setFilter('Opportunity',this)">◎ Opps</button>
         <button class="filter-btn" onclick="setFilter('Deadlines',this)">⏱ Due</button>
         <button class="filter-btn" onclick="setFilter('Spam',this)">✕ Spam</button>
-        </div>
-        <button id="dash-toggle-btn" onclick="toggleDashboard()" title="Toggle dashboard" style="background:transparent;border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:11px;color:var(--text3);cursor:pointer;flex-shrink:0;margin-left:6px;transition:all .15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">⊞</button>
       </div>
 
       <!-- Sort bar -->
       <div id="sort-bar">
-        <span>sorted by <span>urgency</span></span>
-        <span id="batch-select-all" onclick="toggleSelectAll()" style="cursor:pointer;color:var(--text3);letter-spacing:.04em">select all</span>
+        <span style="color:var(--text3)">↕ urgency</span>
+        <span id="batch-select-all" onclick="toggleSelectAll()" style="cursor:pointer;color:var(--text3);letter-spacing:.04em;transition:color .12s" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">select all</span>
       </div>
 
       <!-- Batch action bar -->
@@ -792,6 +822,12 @@
 
     <!-- DETAIL PANEL -->
     <div id="detail-panel">
+      <div id="detail-topbar">
+        <div id="detail-topbar-title">Dashboard</div>
+        <button id="dash-toggle-btn" onclick="toggleDashboard()" title="Toggle dashboard / email view">
+          <span id="dash-toggle-icon">⊞</span> <span id="dash-toggle-label">Dashboard</span>
+        </button>
+      </div>
       <div id="detail-empty" style="display:block">
         <div id="dashboard" style="padding:28px 30px;animation:fadeUp .3s ease">
 
@@ -881,8 +917,8 @@
               <div class="card-label">Category</div>
               <div class="card-value" id="d-category"></div>
             </div>
-            <div class="triage-card">
-              <div class="card-label">Reason</div>
+            <div class="triage-card triage-card-reason">
+              <div class="card-label">Analysis</div>
               <div class="card-value" style="font-size:11px;color:var(--text2);line-height:1.6" id="d-reason"></div>
             </div>
           </div>
@@ -1468,8 +1504,7 @@ function clearDetail() {
   document.getElementById('detail-content').style.display = 'none';
   renderEmailList();
   renderDashboard();
-  const btn = document.getElementById('dash-toggle-btn');
-  if (btn) { btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'; }
+  updateDetailTopbar();
 }
 
 function renderDetail() {
@@ -2056,7 +2091,6 @@ Keep total length under 150 words. Be direct and useful, not generic.`;
 ════════════════════════════════════════════════════════ */
 function toggleDashboard() {
   if (selectedEmailId) {
-    // If an email is open, toggle back to dashboard
     selectedEmailId = null;
     showDashboard = true;
     document.getElementById('detail-empty').style.display = 'block';
@@ -2064,14 +2098,30 @@ function toggleDashboard() {
     renderEmailList();
     renderDashboard();
   } else {
-    // No email open — toggle dashboard visibility
     showDashboard = !showDashboard;
     document.getElementById('dashboard').style.display = showDashboard ? 'block' : 'none';
     if (showDashboard) renderDashboard();
   }
+  updateDetailTopbar();
+}
+
+function updateDetailTopbar(emailSubject) {
+  const titleEl = document.getElementById('detail-topbar-title');
+  const iconEl = document.getElementById('dash-toggle-icon');
+  const labelEl = document.getElementById('dash-toggle-label');
   const btn = document.getElementById('dash-toggle-btn');
-  btn.style.color = showDashboard ? 'var(--accent)' : 'var(--text3)';
-  btn.style.borderColor = showDashboard ? 'var(--accent)' : 'var(--border2)';
+  if (!titleEl) return;
+  if (emailSubject) {
+    titleEl.textContent = emailSubject.length > 40 ? emailSubject.slice(0, 40) + '…' : emailSubject;
+    iconEl.textContent = '⊟';
+    labelEl.textContent = 'Dashboard';
+    btn.classList.add('active');
+  } else {
+    titleEl.textContent = 'Dashboard';
+    iconEl.textContent = '⊞';
+    labelEl.textContent = showDashboard ? 'Hide' : 'Show';
+    btn.classList.toggle('active', showDashboard);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
