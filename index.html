@@ -440,51 +440,99 @@
   .loading-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: loadfill 1.5s ease forwards; }
   @keyframes loadfill { from{width:0} to{width:100%} }
 
-  /* Dashboard */
-  .dash-bar-row { display:flex; align-items:center; gap:8px; }
-  .dash-bar-label { font-size:10px; color:var(--text2); width:60px; flex-shrink:0; }
-  .dash-bar-track { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
-  .dash-bar-fill { height:100%; border-radius:2px; transition:width 1s ease; width:0; }
-  .dash-bar-count { font-size:10px; color:var(--text3); width:24px; text-align:right; flex-shrink:0; }
+  /* ── Dashboard ── */
+  #dashboard { padding:24px 28px; }
 
-  .dash-cat-row { display:flex; align-items:center; gap:6px; }
-  .dash-cat-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-  .dash-cat-name { font-size:10px; color:var(--text2); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-section-label {
+    font-size:9px; color:var(--text3); letter-spacing:.14em;
+    text-transform:uppercase; margin-bottom:10px; font-weight:500;
+  }
+
+  /* Health score row */
+  .dash-health-row {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom:24px; padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .dash-score-num {
+    font-family:'DM Serif Display',serif; font-size:56px;
+    line-height:1; color:#e0eaf8; letter-spacing:-2px;
+  }
+  .dash-score-tag {
+    font-size:11px; color:var(--text3); margin-bottom:8px; margin-left:2px;
+  }
+
+  /* Urgency bars */
+  .dash-bars-section { margin-bottom:20px; }
+  .dash-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .dash-bar-label { font-size:10px; color:var(--text2); width:52px; flex-shrink:0; }
+  .dash-bar-track {
+    flex:1; height:3px; background:var(--border);
+    border-radius:2px; overflow:hidden;
+  }
+  .dash-bar-fill { height:100%; border-radius:2px; transition:width 1.1s cubic-bezier(.4,0,.2,1); width:0; }
+  .dash-bar-count { font-size:10px; color:var(--text3); width:20px; text-align:right; flex-shrink:0; }
+
+  /* Categories + senders grid */
+  .dash-two-col {
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+    margin-bottom:20px; padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .dash-cat-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+  .dash-cat-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .dash-cat-name {
+    font-size:10px; color:var(--text2); flex:1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
   .dash-cat-n { font-size:10px; color:var(--text3); }
 
+  /* Attention items */
+  .dash-attention-section { margin-bottom:20px; }
   .dash-attention-row {
     display:flex; align-items:center; gap:8px;
-    padding:7px 10px; background:var(--bg2);
+    padding:8px 10px; background:var(--bg2);
     border:1px solid var(--border); border-radius:6px;
-    cursor:pointer; transition:border-color .15s;
+    cursor:pointer; transition:all .15s; margin-bottom:5px;
   }
-  .dash-attention-row:hover { border-color:var(--border2); }
-  .dash-attention-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-  .dash-attention-subject { font-size:11px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .dash-attention-from { font-size:10px; color:var(--text3); flex-shrink:0; }
+  .dash-attention-row:hover { border-color:var(--border2); background:var(--bg3); }
+  .dash-attention-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .dash-attention-subject {
+    font-size:11px; color:var(--text); flex:1;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .dash-attention-from { font-size:10px; color:var(--text3); flex-shrink:0; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* Thread grouping */
-  .thread-group { border-bottom:1px solid #0d1018; }
-  .thread-header { position:relative; }
-  .thread-expander {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:4px 14px 4px 34px;
-    background:var(--bg2); cursor:pointer;
-    border-top:1px solid #0d1018;
+  /* Weekly digest section */
+  .dash-digest-section {
+    border-top:1px solid var(--border); padding-top:16px;
+    display:flex; flex-direction:column; gap:10px;
   }
-  .thread-expander:hover { background:#0c1020; }
+  .dash-digest-header { display:flex; align-items:center; justify-content:space-between; }
+  #digest-output {
+    display:none; font-size:11px; color:var(--text2); line-height:1.75;
+    background:var(--bg2); border:1px solid var(--border2);
+    border-radius:8px; padding:14px 16px; animation:fadeUp .2s ease;
+  }
+  #digest-output p { margin-bottom:8px; }
+  #digest-output p:last-child { margin-bottom:0; }
+
+  /* ── Thread grouping ── */
+  .thread-group { border-bottom:1px solid #0d1018; }
+  .thread-expander {
+    display:flex; align-items:center; gap:6px;
+    padding:5px 14px 5px 14px;
+    background:var(--bg2); cursor:pointer;
+    border-top:1px solid #0d1018; transition:background .1s;
+  }
+  .thread-expander:hover { background:#0d1422; }
   .thread-count-badge {
     font-size:9px; color:var(--text3);
-    background:var(--bg3); border:1px solid var(--border2);
-    border-radius:3px; padding:1px 6px; letter-spacing:.04em;
+    letter-spacing:.04em;
   }
   .thread-messages { display:none; }
   .thread-messages.open { display:block; }
-  .thread-child { padding-left:20px; border-left:2px solid var(--border); }
-
-  /* Weekly digest */
-  #digest-output p { margin-bottom:8px; }
-  #digest-output p:last-child { margin-bottom:0; }
+  .thread-child { padding-left:22px; border-left:2px solid var(--border); margin-left:0; }
 
   /* Primary contacts */
   .vip-btn {
@@ -708,7 +756,8 @@
         </div>
       </div>
 
-      <div id="filter-bar">
+      <div id="filter-bar" style="display:flex;align-items:center;justify-content:space-between;padding-right:8px">
+        <div style="display:flex;overflow-x:auto">
         <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
         <button class="filter-btn" onclick="setFilter('Critical',this)">Critical</button>
         <button class="filter-btn" onclick="setFilter('High',this)">High</button>
@@ -717,6 +766,8 @@
         <button class="filter-btn" onclick="setFilter('Opportunity',this)">◎ Opps</button>
         <button class="filter-btn" onclick="setFilter('Deadlines',this)">⏱ Due</button>
         <button class="filter-btn" onclick="setFilter('Spam',this)">✕ Spam</button>
+        </div>
+        <button id="dash-toggle-btn" onclick="toggleDashboard()" title="Toggle dashboard" style="background:transparent;border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:11px;color:var(--text3);cursor:pointer;flex-shrink:0;margin-left:6px;transition:all .15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">⊞</button>
       </div>
 
       <!-- Sort bar -->
@@ -745,55 +796,55 @@
         <div id="dashboard" style="padding:28px 30px;animation:fadeUp .3s ease">
 
           <!-- Inbox Health Score -->
-          <div id="dash-health-row" style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px">
+          <div class="dash-health-row">
             <div>
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">Inbox Health</div>
-              <div style="display:flex;align-items:baseline;gap:8px">
-                <div id="dash-score" style="font-family:'DM Serif Display',serif;font-size:52px;line-height:1;color:#e0eaf8">—</div>
-                <div id="dash-score-label" style="font-size:11px;color:var(--text3);margin-bottom:6px"></div>
+              <div class="dash-section-label">Inbox Health</div>
+              <div style="display:flex;align-items:baseline;gap:6px">
+                <div id="dash-score" class="dash-score-num">—</div>
+                <div id="dash-score-label" class="dash-score-tag"></div>
               </div>
             </div>
-            <div id="dash-score-ring" style="width:64px;height:64px;position:relative;flex-shrink:0">
-              <svg width="64" height="64" style="transform:rotate(-90deg)">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="#161c2a" stroke-width="5"/>
-                <circle id="dash-ring-arc" cx="32" cy="32" r="26" fill="none" stroke="#7c9ef8" stroke-width="5"
-                  stroke-dasharray="163" stroke-dashoffset="163" stroke-linecap="round"
-                  style="transition:stroke-dashoffset 1s ease,stroke .5s ease"/>
-              </svg>
-            </div>
+            <svg width="60" height="60" style="transform:rotate(-90deg);flex-shrink:0">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="#161c2a" stroke-width="4"/>
+              <circle id="dash-ring-arc" cx="30" cy="30" r="24" fill="none" stroke="#7c9ef8" stroke-width="4"
+                stroke-dasharray="151" stroke-dashoffset="151" stroke-linecap="round"
+                style="transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1),stroke .5s ease"/>
+            </svg>
           </div>
 
-          <!-- Urgency breakdown bars -->
-          <div style="margin-bottom:24px">
-            <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Urgency Breakdown</div>
-            <div id="dash-urgency-bars" style="display:flex;flex-direction:column;gap:7px"></div>
+          <!-- Urgency bars -->
+          <div class="dash-bars-section">
+            <div class="dash-section-label">Urgency Breakdown</div>
+            <div id="dash-urgency-bars"></div>
           </div>
 
-          <!-- Category donut + top senders -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <!-- Categories + Senders -->
+          <div class="dash-two-col">
             <div>
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Top Categories</div>
-              <div id="dash-categories" style="display:flex;flex-direction:column;gap:5px"></div>
+              <div class="dash-section-label">Top Categories</div>
+              <div id="dash-categories"></div>
             </div>
             <div>
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Top Senders</div>
-              <div id="dash-senders" style="display:flex;flex-direction:column;gap:5px"></div>
+              <div class="dash-section-label">Top Senders</div>
+              <div id="dash-senders"></div>
             </div>
           </div>
 
-          <!-- Attention needed -->
-          <div style="margin-bottom:24px">
-            <div style="font-size:9px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Needs Attention</div>
-            <div id="dash-attention" style="display:flex;flex-direction:column;gap:5px"></div>
-            <div id="dash-no-attention" style="font-size:11px;color:var(--text3);display:none">All clear — nothing urgent right now.</div>
+          <!-- Needs Attention -->
+          <div class="dash-attention-section">
+            <div class="dash-section-label">Needs Attention</div>
+            <div id="dash-attention"></div>
+            <div id="dash-no-attention" style="font-size:11px;color:var(--text3);display:none;padding:8px 0">All clear — nothing urgent right now.</div>
           </div>
 
-          <!-- Weekly digest button -->
-          <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Weekly Digest</div>
-            <button id="digest-btn" onclick="generateWeeklyDigest()" class="btn-ghost" style="font-size:10px;padding:5px 12px">✦ generate digest</button>
+          <!-- Weekly Digest -->
+          <div class="dash-digest-section">
+            <div class="dash-digest-header">
+              <div class="dash-section-label" style="margin-bottom:0">Weekly Digest</div>
+              <button id="digest-btn" onclick="generateWeeklyDigest()" class="btn-ghost" style="font-size:10px;padding:4px 11px">✦ generate</button>
+            </div>
+            <div id="digest-output"></div>
           </div>
-          <div id="digest-output" style="display:none;margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;animation:fadeUp .2s ease"></div>
         </div>
       </div>
       <div id="detail-content" style="display:none">
@@ -897,6 +948,7 @@ let replyText = '';
 let selectedIds = new Set();
 let showSpam = false;
 let briefingGenerated = false;
+let showDashboard = true; // toggle between dashboard and focused email view
 
 // Primary contacts: { 'email@domain.com': { name, label, addedAt } }
 let primaryContacts = JSON.parse(localStorage.getItem('quell_primary_contacts') || '{}');
@@ -1120,6 +1172,13 @@ function parseGmailMessage(msg) {
   // Truncate very long emails to avoid token limits
   if (body.length > 3000) body = body.slice(0, 3000) + '\n[truncated]';
 
+  // Load cached triage result if available
+  let cachedTriage = null;
+  try {
+    const cached = localStorage.getItem('quell_triage_' + msg.id);
+    if (cached) cachedTriage = JSON.parse(cached);
+  } catch(e) {}
+
   return {
     id: msg.id,
     from: from.match(/<(.+)>/)?.[1] || from,
@@ -1129,7 +1188,7 @@ function parseGmailMessage(msg) {
     body,
     date: dateLabel,
     read: !msg.labelIds?.includes('UNREAD'),
-    triage: null,
+    triage: cachedTriage,
     triaging: false,
   };
 }
@@ -1205,11 +1264,12 @@ function showApp(demo) {
 
 async function autoTriageAndBrief() {
   generateDailyBriefing();
-  // Batch triage 3 at a time — faster while respecting rate limits
+  // Batch triage 2 at a time with delay — avoids token rate limit spikes
   const untriaged = emails.filter(e => !e.triage);
-  for (let i = 0; i < untriaged.length; i += 3) {
-    const batch = untriaged.slice(i, i + 3);
+  for (let i = 0; i < untriaged.length; i += 2) {
+    const batch = untriaged.slice(i, i + 2);
     await Promise.all(batch.map(e => triageEmail(e.id)));
+    if (i + 2 < untriaged.length) await sleep(800); // 800ms gap between batches
   }
   if (!briefingGenerated) generateDailyBriefing();
   updateHeaderStats();
@@ -1393,15 +1453,23 @@ function batchDismiss() {
 ════════════════════════════════════════════════════════ */
 function selectEmail(id) {
   selectedEmailId = id;
+  showDashboard = false;
   renderEmailList();
   renderDetail();
+  // Update toggle button
+  const btn = document.getElementById('dash-toggle-btn');
+  if (btn) { btn.style.color = 'var(--text3)'; btn.style.borderColor = 'var(--border2)'; }
 }
 
 function clearDetail() {
   selectedEmailId = null;
+  showDashboard = true;
   document.getElementById('detail-empty').style.display = 'block';
   document.getElementById('detail-content').style.display = 'none';
   renderEmailList();
+  renderDashboard();
+  const btn = document.getElementById('dash-toggle-btn');
+  if (btn) { btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'; }
 }
 
 function renderDetail() {
@@ -1507,11 +1575,12 @@ async function triageAll() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px;border-color:#00000033;border-top-color:#fff"></span> triaging…';
 
-  // Batch triage 3 at a time — faster while respecting rate limits
+  // Batch triage 2 at a time with delay — avoids token rate limit spikes
   const untriaged = emails.filter(e => !e.triage);
-  for (let i = 0; i < untriaged.length; i += 3) {
-    const batch = untriaged.slice(i, i + 3);
+  for (let i = 0; i < untriaged.length; i += 2) {
+    const batch = untriaged.slice(i, i + 2);
     await Promise.all(batch.map(e => triageEmail(e.id)));
+    if (i + 2 < untriaged.length) await sleep(800); // 800ms gap between batches
   }
 
   btn.disabled = false;
@@ -1565,6 +1634,21 @@ async function triageEmail(id) {
   const email = emails.find(e => e.id === id);
   if (!email || email.triage || email.triaging) return;
 
+  // Dedup — if another email with same subject+sender is already triaged, reuse result
+  const subjectKey = email.subject.replace(/^(re|fwd|fw):\s*/i,'').trim().toLowerCase();
+  const sameThread = emails.find(e =>
+    e.id !== id && e.triage && !e.triage._error &&
+    e.from === email.from &&
+    e.subject.replace(/^(re|fwd|fw):\s*/i,'').trim().toLowerCase() === subjectKey
+  );
+  if (sameThread) {
+    email.triage = { ...sameThread.triage, _reused: true };
+    renderEmailList();
+    if (id === selectedEmailId) renderDetail();
+    updateHeaderStats();
+    return;
+  }
+
   email.triaging = true;
   renderEmailList();
   if (id === selectedEmailId) renderDetail();
@@ -1583,6 +1667,11 @@ Rules: Critical=action needed today; due_dates=[] if none; opportunities=[] if n
       throw new Error('Invalid urgency in response');
     }
     email.triage = parsed;
+    // Persist triage so refresh doesn't re-spend tokens on same email
+    try {
+      const cacheKey = 'quell_triage_' + email.id;
+      localStorage.setItem(cacheKey, JSON.stringify(parsed));
+    } catch(e) {}
   } catch (e) {
     console.error('Triage error for', email.subject, ':', e.message);
     email.triage = {
@@ -1797,7 +1886,7 @@ function renderDashboard() {
   arcEl.style.stroke = scoreColor;
   // Animate ring: circumference = 2π×26 ≈ 163
   setTimeout(() => {
-    arcEl.style.strokeDashoffset = 163 - (163 * score / 100);
+    arcEl.style.strokeDashoffset = 151 - (151 * score / 100);
   }, 100);
 
   // ── Urgency bars ──
@@ -1963,6 +2052,29 @@ Keep total length under 150 words. Be direct and useful, not generic.`;
 }
 
 /* ═══════════════════════════════════════════════════════
+   DASHBOARD TOGGLE
+════════════════════════════════════════════════════════ */
+function toggleDashboard() {
+  if (selectedEmailId) {
+    // If an email is open, toggle back to dashboard
+    selectedEmailId = null;
+    showDashboard = true;
+    document.getElementById('detail-empty').style.display = 'block';
+    document.getElementById('detail-content').style.display = 'none';
+    renderEmailList();
+    renderDashboard();
+  } else {
+    // No email open — toggle dashboard visibility
+    showDashboard = !showDashboard;
+    document.getElementById('dashboard').style.display = showDashboard ? 'block' : 'none';
+    if (showDashboard) renderDashboard();
+  }
+  const btn = document.getElementById('dash-toggle-btn');
+  btn.style.color = showDashboard ? 'var(--accent)' : 'var(--text3)';
+  btn.style.borderColor = showDashboard ? 'var(--accent)' : 'var(--border2)';
+}
+
+/* ═══════════════════════════════════════════════════════
    PRIMARY CONTACTS UI
 ════════════════════════════════════════════════════════ */
 function openVipModal() {
@@ -2040,6 +2152,70 @@ document.addEventListener('click', e => {
   const modal = document.getElementById('vip-modal');
   if (e.target === modal) closeVipModal();
 });
+
+/* ═══════════════════════════════════════════════════════
+   TOKEN THROTTLE + API
+════════════════════════════════════════════════════════ */
+const TOKEN_LIMIT_PER_MIN = 10000;
+let tokenBucket = { count: 0, resetAt: Date.now() + 60000 };
+
+function estimateTokens(prompt, maxTokens) {
+  return Math.ceil((prompt || '').length / 4) + (maxTokens || 400);
+}
+
+async function waitForTokenBudget(needed) {
+  const now = Date.now();
+  if (now >= tokenBucket.resetAt) {
+    tokenBucket = { count: 0, resetAt: now + 60000 };
+  }
+  if (tokenBucket.count + needed > TOKEN_LIMIT_PER_MIN) {
+    const wait = tokenBucket.resetAt - Date.now() + 300;
+    console.warn('Token budget reached, waiting ' + wait + 'ms');
+    await sleep(Math.max(wait, 0));
+    tokenBucket = { count: 0, resetAt: Date.now() + 60000 };
+  }
+  tokenBucket.count += needed;
+}
+
+async function callLlama(prompt, maxTokens, retries) {
+  retries = retries === undefined ? 3 : retries;
+  await waitForTokenBudget(estimateTokens(prompt, maxTokens));
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GROQ_API_KEY,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        max_tokens: maxTokens || 400,
+        temperature: 0.2,
+        stream: false,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('retry-after');
+      const wait = retryAfter ? parseInt(retryAfter) * 1000 : (1500 * Math.pow(2, attempt));
+      console.warn('Rate limited, retrying in ' + wait + 'ms (attempt ' + (attempt+1) + ')');
+      await sleep(wait);
+      continue;
+    }
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error('HTTP ' + res.status + ': ' + err.slice(0, 200));
+    }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!text) throw new Error('Empty response from Llama');
+    return text.trim();
+  }
+  throw new Error('Rate limit exceeded after ' + retries + ' retries');
+}
 
 /* ═══════════════════════════════════════════════════════
    UTILS
