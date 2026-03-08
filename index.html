@@ -1205,9 +1205,11 @@ function showApp(demo) {
 
 async function autoTriageAndBrief() {
   generateDailyBriefing();
+  // Batch triage 3 at a time — faster while respecting rate limits
   const untriaged = emails.filter(e => !e.triage);
-  for (const email of untriaged) {
-    await triageEmail(email.id);
+  for (let i = 0; i < untriaged.length; i += 3) {
+    const batch = untriaged.slice(i, i + 3);
+    await Promise.all(batch.map(e => triageEmail(e.id)));
   }
   if (!briefingGenerated) generateDailyBriefing();
   updateHeaderStats();
@@ -1505,9 +1507,11 @@ async function triageAll() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px;border-color:#00000033;border-top-color:#fff"></span> triaging…';
 
+  // Batch triage 3 at a time — faster while respecting rate limits
   const untriaged = emails.filter(e => !e.triage);
-  for (const email of untriaged) {
-    await triageEmail(email.id);
+  for (let i = 0; i < untriaged.length; i += 3) {
+    const batch = untriaged.slice(i, i + 3);
+    await Promise.all(batch.map(e => triageEmail(e.id)));
   }
 
   btn.disabled = false;
@@ -1565,36 +1569,15 @@ async function triageEmail(id) {
   renderEmailList();
   if (id === selectedEmailId) renderDetail();
 
-  const prompt = `You are an expert email triage assistant. Analyze this email and respond ONLY with valid JSON — no markdown, no extra text whatsoever.
-
-From: ${email.from}
-Subject: ${email.subject}
-Body: ${email.body}
-
-Return exactly this JSON structure:
-{
-  "urgency": "Critical|High|Medium|Low",
-  "category": "Incident / Support|Contract / Legal|Finance / Billing|Code Review / DevOps|Internal / Team|Newsletter|Recruiting / HR|Sales / Partnership|Other",
-  "reason": "One sentence explaining the urgency level",
-  "due_dates": [
-    { "date": "exact date/time string from email", "label": "brief description of what's due" }
-  ],
-  "opportunities": [
-    {
-      "type": "Partnership|Recruiting|Event|Invitation|Other",
-      "description": "Brief description of the opportunity",
-      "action": "Suggested next action (optional)"
-    }
-  ]
-}
-
-Rules:
-- due_dates: extract ALL deadlines, cutoff dates, time-sensitive actions. Empty array if none.
-- opportunities: identify partnership leads, hiring/recruiting signals, event invitations, RSVPs, beneficial networking opportunities. Empty array if none.
-- Be specific and actionable in descriptions.`;
+  const bodySnippet = (email.body || '').slice(0, 800);
+  const prompt = `Triage this email. Reply ONLY with JSON, no other text.
+From:${email.from} Subject:${email.subject}
+Body:${bodySnippet}
+JSON:{"urgency":"Critical|High|Medium|Low","category":"Incident|Legal|Finance|DevOps|Internal|Newsletter|Recruiting|Sales|Other","reason":"<1 sentence>","due_dates":[{"date":"","label":""}],"opportunities":[{"type":"Partnership|Recruiting|Event|Invitation|Other","description":"","action":""}]}
+Rules: Critical=action needed today; due_dates=[] if none; opportunities=[] if none.`;
 
   try {
-    const raw = await callLlama(prompt, 1000);
+    const raw = await callLlama(prompt, 400);
     const parsed = extractJSON(raw);
     if (!parsed.urgency || !['Critical','High','Medium','Low'].includes(parsed.urgency)) {
       throw new Error('Invalid urgency in response');
@@ -1647,28 +1630,11 @@ async function handleDraftClick() {
   const vipNote = primaryContacts[email.from] ? `
 Note: This sender is a primary contact (VIP). Treat with extra care and responsiveness.` : '';
 
-  const replyPrompt = `You are a professional email assistant. Write a reply to this email.
-
-ORIGINAL EMAIL:
-From: ${email.from}
-Subject: ${email.subject}
-Body:
-${(email.body || '').slice(0, 2000)}
-
-CONTEXT:
-- Urgency: ${t.urgency}
-- Category: ${t.category}
-- Reason: ${t.reason || ''}
-${t.due_dates && t.due_dates.length ? '- Deadlines: ' + t.due_dates.map(d => d.date + ': ' + d.label).join(', ') : ''}
-${t.opportunities && t.opportunities.length ? '- Opportunities: ' + t.opportunities.map(o => o.type + ': ' + o.description).join(', ') : ''}${vipNote}
-
-INSTRUCTIONS:
-Write ONLY the reply body text. No subject line, no From/To headers, no metadata.
-- Match tone to urgency: urgent = direct and action-focused; routine = professional and warm
-- Reference specific details from the email (names, dates, amounts)
-- End with exactly one clear next step
-- Length: 3-5 sentences for Low/Medium, 5-8 for High/Critical
-- Write like a real person, not a template`;
+  const replyPrompt = `Write a professional email reply. Output ONLY the reply body, nothing else.
+From:${email.from} Subject:${email.subject}
+Body:${(email.body||'').slice(0,1200)}
+Urgency:${t.urgency} Category:${t.category}${t.reason ? ' Reason:'+t.reason : ''}${t.due_dates&&t.due_dates.length ? ' Deadlines:'+t.due_dates.map(d=>d.date+':'+d.label).join(',') : ''}${t.opportunities&&t.opportunities.length ? ' Opps:'+t.opportunities.map(o=>o.type).join(',') : ''}${vipNote}
+Match tone to urgency. Reference specifics. End with one clear next step. 3-5 sentences (Low/Medium) or 5-8 (High/Critical).`;
   const messages = [{ role: 'user', content: replyPrompt }];
 
   try {
@@ -1769,7 +1735,7 @@ ${summary}
 Write a natural, warm briefing like a smart assistant would. Mention the most important things to address today. Do NOT use bullet points — just flowing prose. Keep it under 60 words.`;
 
   try {
-    const text = await callLlama(prompt, 200);
+    const text = await callLlama(prompt, 120);
     briefingGenerated = true;
 
     // Build stats row
