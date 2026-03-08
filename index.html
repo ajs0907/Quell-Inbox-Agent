@@ -582,12 +582,23 @@
           4. Add <code style="color:#4a7aaa;background:#0a1520;padding:1px 4px;border-radius:2px">http://localhost</code> as authorized origin<br/>
           5. Paste your Client ID below and click Connect
         </div>
-        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
-          <input id="client-id-input" type="text" placeholder="Your Google OAuth Client ID…"
-            style="flex:1;background:#08080a;border:1px solid #222;border-radius:5px;padding:7px 10px;color:#d4d0c8;font-size:10px;font-family:inherit;outline:none;"
-            oninput="document.getElementById('connect-btn').style.opacity=this.value?'1':'.4'"
-          />
-          <button id="connect-btn" onclick="initGmailWithClientId()" style="background:var(--accent);color:#000;border:none;border-radius:5px;padding:7px 14px;font-size:10px;font-family:inherit;font-weight:500;cursor:pointer;opacity:.4;transition:opacity .15s;">Connect</button>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="gemini-key-input" type="password" placeholder="Google AI Studio API key (AIza…)"
+              style="flex:1;background:#08080a;border:1px solid #222;border-radius:5px;padding:7px 10px;color:#d4d0c8;font-size:10px;font-family:inherit;outline:none;"
+              oninput="GEMINI_API_KEY=this.value;localStorage.setItem('quell_gemini_key',this.value);updateConnectBtn()"
+            />
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="client-id-input" type="text" placeholder="Google OAuth Client ID…"
+              style="flex:1;background:#08080a;border:1px solid #222;border-radius:5px;padding:7px 10px;color:#d4d0c8;font-size:10px;font-family:inherit;outline:none;"
+              oninput="updateConnectBtn()"
+            />
+            <button id="connect-btn" onclick="initGmailWithClientId()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:7px 14px;font-size:10px;font-family:inherit;font-weight:500;cursor:pointer;opacity:.4;transition:opacity .15s;white-space:nowrap">Connect</button>
+          </div>
+          <div style="font-size:9px;color:#1e2638;line-height:1.6;">
+            Get your free API key at <span style="color:#3a5a7a">aistudio.google.com</span> → Get API key — it's free
+          </div>
         </div>
       </div>
 
@@ -764,8 +775,9 @@
    CONFIG — fill these in
 ════════════════════════════════════════════════════════ */
 let GOOGLE_CLIENT_ID = '';
+let GEMINI_API_KEY = localStorage.getItem('quell_gemini_key') || '';
 const GMAIL_SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
-const ANTHROPIC_PROXY = 'https://api.anthropic.com/v1/messages'; // direct (works from claude.ai)
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 /* ═══════════════════════════════════════════════════════
    STATE
@@ -879,9 +891,21 @@ function startGoogleAuth() {
   alert('Enter your Google OAuth Client ID in the field above first. See the setup guide for instructions.');
 }
 
+function updateConnectBtn() {
+  const hasKey = document.getElementById('gemini-key-input')?.value.trim();
+  const hasId = document.getElementById('client-id-input')?.value.trim();
+  document.getElementById('connect-btn').style.opacity = (hasKey && hasId) ? '1' : '.4';
+}
+window.addEventListener('load', () => {
+  const keyInput = document.getElementById('gemini-key-input');
+  if (keyInput && GEMINI_API_KEY) { keyInput.value = GEMINI_API_KEY; updateConnectBtn(); }
+});
+
 function initGmailWithClientId() {
+  GEMINI_API_KEY = document.getElementById('gemini-key-input').value.trim();
+  localStorage.setItem('quell_gemini_key', GEMINI_API_KEY);
   const id = document.getElementById('client-id-input').value.trim();
-  if (!id) return;
+  if (!id || !GEMINI_API_KEY) { alert('Please enter both your Gemini API key and Google Client ID.'); return; }
   GOOGLE_CLIENT_ID = id;
 
   showLoading('Loading Google Identity Services…');
@@ -1029,6 +1053,11 @@ function signOut() {
    DEMO MODE
 ════════════════════════════════════════════════════════ */
 function startDemoMode() {
+  const keyInput = document.getElementById('gemini-key-input');
+  if (keyInput?.value.trim()) {
+    GEMINI_API_KEY = keyInput.value.trim();
+    localStorage.setItem('quell_gemini_key', GEMINI_API_KEY);
+  }
   isDemoMode = true;
   emails = DEMO_EMAILS.map(e => ({ ...e, triage: null, triaging: false }));
   setUserInfo('demo@example.com');
@@ -1383,6 +1412,26 @@ async function triageAll() {
   setTimeout(() => { btn.innerHTML = '▶ triage all'; }, 3000);
 }
 
+async function callGemini(prompt, maxTokens) {
+  const res = await fetch(GEMINI_URL + '?key=' + GEMINI_API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.3 },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Gemini HTTP ' + res.status + ': ' + err.slice(0, 200));
+  }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini');
+  return text.trim();
+}
+
 async function triageEmail(id) {
   const email = emails.find(e => e.id === id);
   if (!email || email.triage || email.triaging) return;
@@ -1420,25 +1469,9 @@ Rules:
 - Be specific and actionable in descriptions.`;
 
   try {
-    const res = await fetch(ANTHROPIC_PROXY, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-    const raw = (data.content || []).map(b => b.text || '').join('');
+    const raw = await callGemini(prompt, 1000);
     const clean = raw.replace(/```json[\s\S]*?```|```/g, '').trim();
     const parsed = JSON.parse(clean);
-    // Validate required fields
     if (!parsed.urgency || !['Critical','High','Medium','Low'].includes(parsed.urgency)) {
       throw new Error('Invalid urgency in response');
     }
@@ -1490,10 +1523,7 @@ async function handleDraftClick() {
   const vipNote = primaryContacts[email.from] ? `
 Note: This sender is a primary contact (VIP). Treat with extra care and responsiveness.` : '';
 
-  const messages = [
-    {
-      role: 'user',
-      content: `You are a professional email assistant. Write a reply to this email.
+  const replyPrompt = `You are a professional email assistant. Write a reply to this email.
 
 ORIGINAL EMAIL:
 From: ${email.from}
@@ -1514,35 +1544,11 @@ Write ONLY the reply body text. No subject line, no From/To headers, no metadata
 - Reference specific details from the email (names, dates, amounts)
 - End with exactly one clear next step
 - Length: 3-5 sentences for Low/Medium, 5-8 for High/Critical
-- Write like a real person, not a template`
-    }
-  ];
+- Write like a real person, not a template`;
+  const messages = [{ role: 'user', content: replyPrompt }];
 
   try {
-    const res = await fetch(ANTHROPIC_PROXY, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 800,
-        messages,
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error('HTTP ' + res.status + ': ' + errText.slice(0, 200));
-    }
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-
-    const draft = (data.content || []).map(b => b.type === 'text' ? b.text : '').join('').trim();
-    if (!draft) throw new Error('API returned empty content');
+    const draft = await callGemini(messages[0].content, 800);
 
     // Cache on email object
     email.cachedReply = draft;
@@ -1637,22 +1643,7 @@ ${summary}
 Write a natural, warm briefing like a smart assistant would. Mention the most important things to address today. Do NOT use bullet points — just flowing prose. Keep it under 60 words.`;
 
   try {
-    const res = await fetch(ANTHROPIC_PROXY, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    const text = await callGemini(prompt, 200);
     briefingGenerated = true;
 
     // Build stats row
