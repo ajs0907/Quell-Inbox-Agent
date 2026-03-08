@@ -296,14 +296,20 @@
     flex: 1;
     overflow-y: auto;
     background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+  #detail-panel > #detail-empty {
+    flex: 1;
+    overflow-y: auto;
   }
 
   #detail-empty {
     height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 8px; color: #10161f;
+    display: block;
+    overflow-y: auto;
+    color: var(--text);
   }
-  #detail-empty .big { font-family: 'DM Serif Display', serif; font-size: 72px; font-weight: 400; letter-spacing: -3px; ; }
 
   #detail-content { max-width: 680px; padding: 26px 30px; animation: fadeUp .2s ease; }
 
@@ -735,7 +741,7 @@
 
     <!-- DETAIL PANEL -->
     <div id="detail-panel">
-      <div id="detail-empty">
+      <div id="detail-empty" style="display:block">
         <div id="dashboard" style="padding:28px 30px;animation:fadeUp .3s ease">
 
           <!-- Inbox Health Score -->
@@ -1785,9 +1791,16 @@ Write a natural, warm briefing like a smart assistant would. Mention the most im
    STATS DASHBOARD
 ════════════════════════════════════════════════════════ */
 function renderDashboard() {
+  const dashEl = document.getElementById('dashboard');
+  if (!dashEl) return;
   const triaged = emails.filter(e => e.triage && !isSpam(e));
   const total = emails.filter(e => !isSpam(e)).length;
-  if (total === 0) return;
+  if (total === 0) {
+    // Show empty state inside dashboard
+    const scoreEl = document.getElementById('dash-score');
+    if (scoreEl) scoreEl.textContent = '—';
+    return;
+  }
 
   // ── Health score (0-100) ──
   const spam = emails.filter(e => isSpam(e)).length;
